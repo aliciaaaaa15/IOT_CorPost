@@ -1,0 +1,32 @@
+# ---------------------------------------------------------------
+# Firmware (nRF Connect SDK / Zephyr)
+# ---------------------------------------------------------------
+# Carpetas de compilación (las genera la extensión nRF Connect o `west build`)
+build/
+build_*/
+_sysbuild/
+.cache/
+
+# Binarios y salidas de compilación
+*.hex
+*.elf
+*.bin
+*.map
+*.uf2
+compile_commands.json
+
+# Registros de depuración (J-Link / RTT)
+*.log
+JLink*.txt
+rtt*.txt
+
+# Editor / sistema (la configuración de nRF Connect es local de cada máquina)
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Secretos y locales
+.env
+.env.*
+!.env.example

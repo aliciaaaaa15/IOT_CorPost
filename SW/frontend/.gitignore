@@ -1,0 +1,43 @@
+# ---------------------------------------------------------------
+# Frontend / app móvil (React Native, con o sin Expo)
+# ---------------------------------------------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.expo/
+.expo-shared/
+dist/
+web-build/
+.metro-health-check*
+*.tsbuildinfo
+
+# Android
+android/build/
+android/app/build/
+android/.gradle/
+android/local.properties
+*.apk
+*.aab
+*.jks
+*.keystore
+
+# iOS
+ios/build/
+ios/Pods/
+*.xcworkspace/xcuserdata/
+xcuserdata/
+
+# Secretos y locales
+.env
+.env.*
+!.env.example
+
+# Registros
+*.log
+
+# Editor / sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

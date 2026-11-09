@@ -1,0 +1,61 @@
+Ventanas: 10180 | personas: 30
+  válidas (quieto): 4554 | no válidas (movimiento): 5626
+     1 andar              2055
+     2 subir_escaleras    1765
+     3 bajar_escaleras    1579
+     4 sentado            2164
+     5 de_pie             2390
+     7 de_pie->sentado    137
+     8 sentado->de_pie    90
+
+=== BASELINE: umbral en acc_mag_std (leave-one-person-out) ===
+  umbral con todos los datos: 0.0424 g
+  exactitud 0.997 | movimiento detectado 0.996 | quietas descartadas 0.002
+  matriz [[TN FP],[FN TP]]: [[4544, 10], [25, 5601]]
+
+=== ÁRBOL (leave-one-person-out) ===
+  depth=2: acc 0.998 | mov detectado 0.998 | quietas descartadas 0.001
+  depth=3: acc 0.998 | mov detectado 0.998 | quietas descartadas 0.001
+  depth=4: acc 0.998 | mov detectado 0.998 | quietas descartadas 0.001
+  depth=5: acc 0.998 | mov detectado 0.998 | quietas descartadas 0.001
+  depth=6: acc 0.998 | mov detectado 0.998 | quietas descartadas 0.001
+  -> profundidad elegida: 2
+  exactitud 0.998 | movimiento detectado 0.998 | quietas descartadas 0.001
+  matriz [[TN FP],[FN TP]]: [[4551, 3], [13, 5613]]
+
+  Por persona: sensibilidad mov. media 0.998 (mín 0.981, persona 18) | quietas descartadas media 0.001 (máx 0.015)
+
+=== Tasa de error por actividad (árbol vs baseline) ===
+  actividad              n  error árbol  error baseline
+  andar               2055        0.000           0.000
+  subir_escaleras     1765        0.000           0.000
+  bajar_escaleras     1579        0.000           0.000
+  sentado             2164        0.000           0.000
+  de_pie              2390        0.001           0.004
+  de_pie->sentado      137        0.051           0.109
+  sentado->de_pie       90        0.067           0.111
+
+=== MODELO FINAL (entrenado con todos los datos) ===
+  nodos totales: 7 | hojas: 4 | profundidad: 2
+  importancia de características:
+    acc_x_std           0.997
+    acc_mag_range       0.003
+    acc_y_std           0.001
+
+|--- acc_x_std <= 0.05
+|   |--- acc_y_std <= 0.07
+|   |   |--- class: 0
+|   |--- acc_y_std >  0.07
+|   |   |--- class: 0
+|--- acc_x_std >  0.05
+|   |--- acc_mag_range <= 0.11
+|   |   |--- class: 0
+|   |--- acc_mag_range >  0.11
+|   |   |--- class: 1
+
+=== CRITERIOS DE VIABILIDAD ===
+  >=90% movimiento detectado:   0.998  -> OK
+  <=10% quietas descartadas:    0.001  -> OK
+  Mejora sobre baseline (mov. detectado a igual o menos descarte): árbol 0.998/0.001 vs umbral 0.996/0.002
+
+Archivos guardados en ./out/

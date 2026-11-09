@@ -1,0 +1,41 @@
+# ---------------------------------------------------------------
+# Datos: NO se suben al repositorio
+# ---------------------------------------------------------------
+# Dataset público HAPT (~130 MB). Se descarga aparte (ver README).
+/hapt/
+# Grabaciones propias del equipo (datos personales de las personas que graban)
+/exportaciones/
+/mis_grabaciones/
+
+# ---------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+tempCodeRunnerFile.py
+
+# ---------------------------------------------------------------
+# Secretos y locales
+# ---------------------------------------------------------------
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# Editor / sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

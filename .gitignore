@@ -1,0 +1,28 @@
+# ---------------------------------------------------------------
+# Raíz del repositorio CorPost
+# (cada proyecto —HW/corpost_fw, HW/ai_movment_test, SW/backend,
+#  SW/frontend— tiene además su propio .gitignore)
+# ---------------------------------------------------------------
+
+# Archivos temporales de Office (aparecen mientras un documento está abierto)
+~$*
+*.tmp
+*.bak
+*.swp
+
+# Secretos
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Registros
+*.log
+
+# Editor / sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

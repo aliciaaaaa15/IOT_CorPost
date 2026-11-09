@@ -1,0 +1,42 @@
+# ---------------------------------------------------------------
+# Backend (Python / FastAPI)
+# ---------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Base de datos y volúmenes locales (PostgreSQL / TimescaleDB, SQLite de pruebas)
+*.db
+*.sqlite
+*.sqlite3
+pgdata/
+postgres-data/
+.docker-data/
+
+# Secretos: claves de API (p. ej. del LLM), contraseñas de la base de datos...
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Registros
+*.log
+
+# Editor / sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

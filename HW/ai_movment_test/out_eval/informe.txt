@@ -1,0 +1,93 @@
+Datos: 3294 ventanas | 27 grabaciones | personas: [np.str_('alicia')]
+  quietas (válida): 1234 | movimiento (no válida): 2060
+  ventanas por tipo: {'sentado_teclear': np.int64(139), 'sentado_reclinado': np.int64(127), 'girar_silla': np.int64(125), 'estirar_delante': np.int64(124), 'levantarse_normal': np.int64(124), 'moverse_silla': np.int64(124), 'sentado_ladoder': np.int64(124), 'andar_lento': np.int64(123), 'sentado_movil': np.int64(123), 'inclinarse_lento': np.int64(122), 'inclinarse_normal': np.int64(122), 'moverse_piernas': np.int64(122), 'sentado_recto': np.int64(122), 'agacharse_sentado': np.int64(121), 'depie_quieto': np.int64(121), 'estirar_lado': np.int64(121), 'sentado_ladoizq': np.int64(121), 'gesticular': np.int64(120), 'girar_tronco': np.int64(120), 'sentado_hablar': np.int64(120), 'agacharse_depie': np.int64(119), 'estirar_arriba': np.int64(119), 'moverse_chaqueta': np.int64(119), 'sentado_encorvado': np.int64(119), 'andar_normal': np.int64(118), 'sentado_adelante': np.int64(118), 'levantarse_lento': np.int64(117)}
+[aviso] con <3 personas no se calculan los modelos LOPO y las cifras son poco fiables.
+
+==============================================================================
+RESUMEN (criterios: mov. detectado >= 90 %, quietas descartadas <= 10 %)
+==============================================================================
+modelo                                       mov.detect.         IC95%  descart.         IC95%  veredicto
+Umbral HAPT (0.0424 g)                             0.197   [0.05,0.36]     0.000   [0.00,0.00]  NO CUMPLE
+Árbol out                                          0.128   [0.03,0.27]     0.000   [0.00,0.00]  NO CUMPLE
+Árbol out_orientation_free                         0.387   [0.19,0.60]     0.000   [0.00,0.00]  NO CUMPLE
+  * = entrenado con estos mismos datos: cifra optimista, no usar para decidir.
+  IC95 %: bootstrap remuestreando grabaciones (es más fiable que remuestrear ventanas).
+
+------------------------------------------------------------------------------
+Umbral HAPT (0.0424 g)
+  umbral fijo en acc_mag_std, aprendido con HAPT
+  matriz  quieto->válida 1234 | quieto->no válida 0 | movimiento->válida 1654 (¡grave!) | movimiento->no válida 406
+  exactitud 0.498 | movimiento detectado 0.197 | quietas descartadas 0.000
+  por persona:
+    alicia       mov. detectado 0.197 | quietas descartadas 0.000 | error 0.502
+  grabaciones con más errores:
+    andar_lento_alicia_01                    error 1.00 (123 ventanas)
+    estirar_arriba_alicia_01                 error 1.00 (119 ventanas)
+    estirar_delante_alicia_01                error 1.00 (124 ventanas)
+    girar_silla_alicia_01                    error 1.00 (125 ventanas)
+    girar_tronco_alicia_01                   error 1.00 (120 ventanas)
+
+------------------------------------------------------------------------------
+Árbol out
+  7 nodos, usa: acc_mag_range, acc_x_std, acc_y_std
+  matriz  quieto->válida 1234 | quieto->no válida 0 | movimiento->válida 1797 (¡grave!) | movimiento->no válida 263
+  exactitud 0.454 | movimiento detectado 0.128 | quietas descartadas 0.000
+  por persona:
+    alicia       mov. detectado 0.128 | quietas descartadas 0.000 | error 0.546
+  grabaciones con más errores:
+    gesticular_alicia_01                     error 1.00 (120 ventanas)
+    estirar_arriba_alicia_01                 error 1.00 (119 ventanas)
+    estirar_delante_alicia_01                error 1.00 (124 ventanas)
+    girar_silla_alicia_01                    error 1.00 (125 ventanas)
+    girar_tronco_alicia_01                   error 1.00 (120 ventanas)
+
+------------------------------------------------------------------------------
+Árbol out_orientation_free
+  7 nodos, usa: acc_mag_std, angle_max_dev
+  matriz  quieto->válida 1234 | quieto->no válida 0 | movimiento->válida 1263 (¡grave!) | movimiento->no válida 797
+  exactitud 0.617 | movimiento detectado 0.387 | quietas descartadas 0.000
+  por persona:
+    alicia       mov. detectado 0.387 | quietas descartadas 0.000 | error 0.383
+  grabaciones con más errores:
+    girar_silla_alicia_01                    error 1.00 (125 ventanas)
+    girar_tronco_alicia_01                   error 1.00 (120 ventanas)
+    estirar_arriba_alicia_01                 error 1.00 (119 ventanas)
+    gesticular_alicia_01                     error 1.00 (120 ventanas)
+    inclinarse_normal_alicia_01              error 1.00 (122 ventanas)
+
+==============================================================================
+ERROR POR TIPO DE ACTIVIDAD (fracción de ventanas mal clasificadas)
+==============================================================================
+  M1 = Umbral HAPT (0.0424 g)
+  M2 = Árbol out
+  M3 = Árbol out_orientation_free
+                     n       clase   M1   M2   M3
+girar_silla        125  movimiento 1.00 1.00 1.00
+inclinarse_normal  122  movimiento 1.00 1.00 1.00
+moverse_piernas    122  movimiento 1.00 1.00 1.00
+estirar_arriba     119  movimiento 1.00 1.00 1.00
+gesticular         120  movimiento 1.00 1.00 1.00
+girar_tronco       120  movimiento 1.00 1.00 1.00
+andar_lento        123  movimiento 1.00 0.98 0.98
+inclinarse_lento   122  movimiento 1.00 1.00 0.97
+moverse_chaqueta   119  movimiento 0.98 0.96 0.97
+estirar_lado       121  movimiento 1.00 1.00 0.52
+levantarse_lento   117  movimiento 0.97 0.99 0.48
+levantarse_normal  124  movimiento 0.51 1.00 0.17
+estirar_delante    124  movimiento 1.00 1.00 0.10
+andar_normal       118  movimiento 0.16 0.05 0.08
+moverse_silla      124  movimiento 0.07 0.70 0.07
+agacharse_sentado  121  movimiento 0.77 0.64 0.07
+agacharse_depie    119  movimiento 0.18 0.49 0.02
+sentado_teclear    139      quieto 0.00 0.00 0.00
+sentado_reclinado  127      quieto 0.00 0.00 0.00
+sentado_movil      123      quieto 0.00 0.00 0.00
+sentado_ladoder    124      quieto 0.00 0.00 0.00
+sentado_recto      122      quieto 0.00 0.00 0.00
+depie_quieto       121      quieto 0.00 0.00 0.00
+sentado_ladoizq    121      quieto 0.00 0.00 0.00
+sentado_hablar     120      quieto 0.00 0.00 0.00
+sentado_encorvado  119      quieto 0.00 0.00 0.00
+sentado_adelante   118      quieto 0.00 0.00 0.00
+
+Guardado en ./out_eval/: informe.txt, confusion_matrices.png, predicciones_por_ventana.csv, error_por_tipo.csv
