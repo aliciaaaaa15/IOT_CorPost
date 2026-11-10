@@ -1,118 +1,120 @@
 
 
-## 1. App y configuración
+## 1. App and settings
 
-**App: Sensor Logger** (Kelvin Choi). Es gratis, existe para iOS y Android, registra acelerómetro y giroscopio a la vez y exporta en "Zipped CSV", que es el formato gratuito. No uses "Combined CSV", que es de pago.
+**App: Sensor Logger** (Kelvin Choi). It is free, available for iOS and Android, records accelerometer and gyroscope at the same time and exports as "Zipped CSV", which is the free format. Do not use "Combined CSV", which is paid.
 
-| Ajuste | Valor |
+| Setting | Value |
 |---|---|
-| Sensores activos | Solo **acelerómetro** y **giroscopio**. Desactiva GPS, cámara, micrófono, etc. |
-| Frecuencia | **50 Hz** para ambos (o la más alta que permita, si es menor). Luego el código reduce a 10 Hz. |
-| Aceleración | La que **incluye gravedad**. Es lo que permite calcular el ángulo. El conversor avisa si en reposo no mide ~1 g. |
-| Pantalla | Siempre encendida y app en primer plano. |
-| Interrupciones | Modo avión y "no molestar", **sin vibración**. Una vibración por notificación contamina los datos. |
-| Batería | Desactiva el ahorro de batería. |
-| Móvil | Usa **el mismo móvil** para todo. Los ejes de iOS y Android difieren y los sensores también. |
+| Active sensors | **Accelerometer** and **gyroscope** only. Turn off GPS, camera, microphone, etc. |
+| Sampling rate | **50 Hz** for both (or the highest the phone allows, if lower). The code later downsamples to 10 Hz. |
+| Acceleration | The one that **includes gravity**. It is what makes it possible to compute the angle. The converter warns if the magnitude at rest is not ~1 g. |
+| Screen | Always on, with the app in the foreground. |
+| Interruptions | Airplane mode and "do not disturb", **with no vibration**. A vibration from a notification contaminates the data. |
+| Battery | Turn off battery saving. |
+| Phone | Use **the same phone** for everything. iOS and Android axes differ, and so do the sensors. |
 
-## 2. Dónde y cómo colocar el móvil
+## 2. Where and how to place the phone
 
-Pregunta primero dónde irá el clip y replícalo. Si aún no está decidido, usa esta posición:
+First find out where the clip will go and replicate that. If it is not decided yet, use this position:
 
-- **Zona**: centro del pecho, justo bajo las clavículas (5-10 cm bajo el cuello).
-- **Orientación**: vertical, parte superior hacia arriba y pantalla hacia fuera. Que sea siempre idéntica.
-- **Sujeción**: un arnés o banda elástica de pecho para móvil, o un bolsillo muy ajustado. **Nada que cuelgue**, como un cordón.
-- **Prueba de sujeción**: camina y salta suavemente. Si el móvil rebota respecto al cuerpo, está mal sujeto y generará un movimiento que el clip real no tendrá.
+- **Area**: center of the chest, just below the collarbones (5-10 cm below the neck).
+- **Orientation**: vertical, top side up and screen facing outward. It must always be identical.
+- **Fastening**: a chest harness or elastic band for phones, or a very tight pocket. **Nothing that dangles**, such as a cord.
+- **Fastening test**: walk and jump gently. If the phone bounces relative to the body, it is badly fastened and will create motion that the real clip will not have.
 
-**Variedad**, que es lo que hace que el modelo generalice:
-- Al menos 2 sesiones en días distintos, con ropa distinta (camiseta fina, sudadera).
-- Quita y vuelve a poner el móvil entre sesiones.
-- Usa al menos 2 sillas distintas, por ejemplo una de oficina con ruedas y una fija.
-- Mínimo 3 personas, mejor 4-5, con alturas y complexiones distintas. Pide permiso a quien participe.
+**Variety**, which is what makes the model generalize:
+- At least 2 sessions on different days, with different clothing (thin T-shirt, sweatshirt).
+- Take the phone off and put it back on between sessions.
+- Use at least 2 different chairs, for example an office chair with wheels and a fixed one.
+- At least 3 people, preferably 4-5, with different heights and builds. Ask permission from anyone taking part.
 
-## 3. Procedimiento de cada grabación
+## 3. Procedure for each recording
 
-1. Pon el móvil, abre la app y pulsa **Start**.
-2. Durante **5 s** colócate y quédate quieta en la postura inicial. El código recorta esos segundos.
-3. Haz la actividad **120 s** (mínimo 90 s). Usa un reloj o temporizador **aparte**, no el móvil.
-4. En los **5 s** finales quítate el móvil con calma y pulsa **Stop**.
-5. Renombra la grabación y exporta.
+1. Put on the phone, open the app and press **Start**.
+2. For **5 s**, get into position and stay still in the initial posture. The code trims those seconds.
+3. Do the activity for **120 s** (minimum 90 s). Use a **separate** clock or timer, not the phone.
+4. In the final **5 s**, calmly take off the phone and press **Stop**.
+5. Rename the recording and export it.
 
-Si tienes a alguien que pulse Start/Stop y lleve el cronómetro, mejor.
+It is better if someone else presses Start/Stop and keeps the stopwatch.
 
-**Por qué 120 s:** con ventanas de 2 s y 50 % de solape salen unas 110 ventanas por grabación. Es mejor muchas grabaciones de 2 min que pocas de 10, porque así hay más variedad de posturas y recolocaciones.
+**Why 120 s:** with 2 s windows and 50 % overlap, a recording gives about 110 windows. Many 2-minute recordings are better than a few 10-minute ones, because they give more variety of postures and repositioning.
 
-## 4. Reglas de etiquetado (decidirlas ya)
+## 4. Labeling rules (decide them now)
 
-Imprime esto y no lo cambies después:
+Print this and do not change it afterwards:
 
-- **Válida**: tronco y hombros quietos. Solo se mueven manos, antebrazos, cabeza, respiración, voz.
-- **No válida**: se mueve el tronco, los hombros o el cuerpo entero.
-- **Cambiar de postura** (de recta a encorvada, recolocarte) es no válida mientras lo haces. Una vez quieta en la nueva postura, es válida.
-- **Una postura mantenida quieta** es siempre válida, aunque sea "mala": inclinada, encorvada, de lado.
-- **Una sola actividad por grabación.** No cambies de postura en las válidas.
-- **Sin pausas largas** en las no válidas: si te paras más de 1 s, esas ventanas quedan mal etiquetadas. Haz los ciclos de forma continua.
+- **Valid**: trunk and shoulders still. Only hands, forearms, head, breathing and voice move.
+- **Not valid**: the trunk, the shoulders or the whole body moves.
+- **Changing posture** (from straight to slouched, repositioning) is not valid while it is being done. Once still in the new posture, it is valid.
+- **A posture held still** is always valid, even if it is "bad": leaning, slouched, sideways.
+- **A single activity per recording.** Do not change posture in the valid ones.
+- **No long pauses** in the not-valid ones: if there is a stop of more than 1 s, those windows end up mislabeled. Do the cycles continuously.
 
-## 5. Qué grabar y cómo
+## 5. What to record and how
 
-Las marcadas con ★ son el **núcleo** (19 grabaciones, unos 40 min por persona). Con todo son 30 grabaciones, algo más de una hora por persona.
+The ones marked with ★ are the **core** (19 recordings, about 40 min per person). The full set is 30 recordings, a little over an hour per person.
 
-### Válidas (nombre empieza por `sentado` o `depie`)
+The class names (first token of each file name) are Spanish prefixes and must be kept as they are: `run_own.py` uses them to assign the label.
 
-| Nombre | Grab. | Cómo hacerlo |
+### Valid (name starts with `sentado` or `depie`)
+
+| Name | Rec. | How to do it |
 |---|---|---|
-| ★ `sentado_recto` | 2 | Espalda recta apoyada en el respaldo, pies en el suelo. Mira la pantalla, teclea y usa el ratón con normalidad. |
-| ★ `sentado_encorvado` | 2 | Hombros caídos, cabeza adelantada, espalda redondeada. Es la postura "mala" típica. |
-| ★ `sentado_adelante` | 1 | Tronco inclinado ~20-30° hacia delante, codos en la mesa. |
-| `sentado_reclinado` | 1 | Reclinada hacia atrás en el respaldo, ~20°. |
-| `sentado_ladoizq` / `sentado_ladoder` | 1+1 | Tronco inclinado ~10-15° a un lado, apoyada en el reposabrazos. |
-| ★ `sentado_teclear` | 2 | Trabajo normal: teclear, ratón, mirar la pantalla, con micro-movimientos naturales y sin cambiar de postura. |
-| `sentado_movil` | 1 | Mirando el móvil o leyendo en papel, cabeza baja. |
-| `sentado_hablar` | 1 | Hablar, beber de un vaso, rascarte la cara, toser, reír. Tronco quieto. |
-| ★ `depie_quieto` | 1 | De pie parada, peso repartido. |
+| ★ `sentado_recto` | 2 | Straight back resting on the backrest, feet on the floor. Look at the screen, type and use the mouse normally. |
+| ★ `sentado_encorvado` | 2 | Drooping shoulders, head forward, rounded back. It is the typical "bad" posture. |
+| ★ `sentado_adelante` | 1 | Trunk leaning ~20-30° forward, elbows on the desk. |
+| `sentado_reclinado` | 1 | Reclined backward on the backrest, ~20°. |
+| `sentado_ladoizq` / `sentado_ladoder` | 1+1 | Trunk leaning ~10-15° to one side, resting on the armrest. |
+| ★ `sentado_teclear` | 2 | Normal work: typing, mouse, looking at the screen, with natural micro-movements and without changing posture. |
+| `sentado_movil` | 1 | Looking at the phone or reading on paper, head down. |
+| `sentado_hablar` | 1 | Talking, drinking from a glass, scratching the face, coughing, laughing. Trunk still. |
+| ★ `depie_quieto` | 1 | Standing still, weight evenly distributed. |
 
-### No válidas (el primer token es la clase)
+### Not valid (the first token is the class)
 
-| Nombre | Grab. | Cómo hacerlo |
+| Name | Rec. | How to do it |
 |---|---|---|
-| ★ `andar_normal` | 1 | Andar a ritmo normal por la sala o el pasillo, con giros. |
-| ★ `andar_lento` | 1 | Paseo muy lento, paso corto. Es un caso difícil. |
-| ★ `levantarse_normal` | 1 | Ciclo continuo: sentada, levantarte, quedarte de pie, sentarte. Unos 5-6 s por ciclo. |
-| ★ `levantarse_lento` | 1 | Lo mismo muy despacio, unos 8-10 s por ciclo. Es el caso límite del que hablaba tu documento. |
-| ★ `estirar_delante` | 1 | Sentada, alcanzar un objeto 40-60 cm más allá de lo cómodo, volver, alternar manos. Unos 4 s por repetición. |
-| `estirar_lado` | 1 | Alcanzar algo a tu lado, a la altura del hombro. |
-| `estirar_arriba` | 1 | Desperezarte con los brazos arriba, bostezar. |
-| ★ `girar_tronco` | 1 | Sentada, girar el torso 90° a izquierda y derecha, como mirar a quien está detrás. |
-| `girar_silla` | 1 | Girar con la silla giratoria a un lado y otro. |
-| ★ `agacharse_sentado` | 1 | Sentada, inclinarte hacia el suelo a recoger algo y volver, en ciclos de ~5 s. |
-| `agacharse_depie` | 1 | De pie, agacharte a recoger algo. |
-| ★ `gesticular` | 1 | Sentada, explicar algo en voz alta con gestos amplios de brazos. |
-| ★ `inclinarse_normal` | 1 | Pasar de recta a encorvada y volver en ciclos de ~3 s, sin parar. |
-| ★ `inclinarse_lento` | 1 | Igual pero muy despacio, unos 6 s por ciclo. Es otro caso difícil. |
-| ★ `moverse_silla` | 1 | Recolocarte en la silla, desplazarte hacia delante o atrás, apoyarte. |
-| `moverse_piernas` | 1 | Cruzar y descruzar piernas, apoyar un pie en la silla. |
-| `moverse_chaqueta` | 1 | Ponerte y quitarte una chaqueta una y otra vez. |
+| ★ `andar_normal` | 1 | Walk at a normal pace around the room or the corridor, with turns. |
+| ★ `andar_lento` | 1 | Very slow walk, short steps. It is a difficult case. |
+| ★ `levantarse_normal` | 1 | Continuous cycle: sitting, standing up, staying standing, sitting down. About 5-6 s per cycle. |
+| ★ `levantarse_lento` | 1 | The same, very slowly, about 8-10 s per cycle. It is the borderline case identified in the design document. |
+| ★ `estirar_delante` | 1 | Sitting, reach for an object 40-60 cm beyond the comfortable distance, come back, alternate hands. About 4 s per repetition. |
+| `estirar_lado` | 1 | Reach for something at the side, at shoulder height. |
+| `estirar_arriba` | 1 | Stretch with the arms up, yawn. |
+| ★ `girar_tronco` | 1 | Sitting, rotate the torso 90° to the left and right, as if looking at someone behind. |
+| `girar_silla` | 1 | Turn with the swivel chair from side to side. |
+| ★ `agacharse_sentado` | 1 | Sitting, lean toward the floor to pick something up and come back, in cycles of ~5 s. |
+| `agacharse_depie` | 1 | Standing, bend down to pick something up. |
+| ★ `gesticular` | 1 | Sitting, explain something aloud with wide arm gestures. |
+| ★ `inclinarse_normal` | 1 | Go from straight to slouched and back in cycles of ~3 s, without stopping. |
+| ★ `inclinarse_lento` | 1 | The same but very slowly, about 6 s per cycle. It is another difficult case. |
+| ★ `moverse_silla` | 1 | Reposition on the chair, move forward or backward, lean. |
+| `moverse_piernas` | 1 | Cross and uncross the legs, rest a foot on the chair. |
+| `moverse_chaqueta` | 1 | Put on and take off a jacket over and over. |
 
-**Cuántas más grabaciones:** en tu documento proponías 15-20 min por clase y persona. Esta versión es una versión reducida. Si los resultados con el núcleo son prometedores, amplía sobre todo los casos difíciles (`levantarse_lento`, `inclinarse_lento`, `andar_lento`, `moverse_*`).
+**More recordings:** the design document proposed 15-20 min per class and person. This version is a reduced one. If the results with the core set are promising, extend mainly the difficult cases (`levantarse_lento`, `inclinarse_lento`, `andar_lento`, `moverse_*`).
 
-## 6. Nombrado y preparación de los datos
+## 6. Naming and preparing the data
 
-**Formato del nombre:** `clase_detalle_persona_nn`, todo en minúsculas, sin acentos ni espacios, y sin guiones bajos dentro de cada parte.
+**Name format:** `class_detail_person_nn`, all lowercase, with no accents or spaces, and with no underscores inside each part.
 
-Ejemplos: `sentado_recto_ana_01.zip`, `levantarse_lento_luis_02.zip`. La **persona** es el penúltimo bloque y es la que usa el código para dejar a alguien fuera en la validación.
+Examples: `sentado_recto_ana_01.zip`, `levantarse_lento_luis_02.zip`. The **person** is the second-to-last block and is the one the code uses to leave someone out during validation.
 
-Pasos:
+Steps:
 
-1. Exporta cada grabación como **Zipped CSV** y pásala al ordenador.
-2. Renombra cada zip como arriba. El nombre pasa a ser la etiqueta.
-3. Convierte y revisa los avisos:
+1. Export each recording as **Zipped CSV** and transfer it to the computer.
+2. Rename each zip as above. The name becomes the label.
+3. Convert and check the warnings:
    ```bash
    python convert_sensorlogger.py --src ./exportaciones --out ./mis_grabaciones
    ```
-   Cada línea indica `OK` o `REVISAR`, con la duración, la frecuencia real (debería rondar los 50 Hz), si la aceleración es m/s² o g, si la magnitud en reposo es ~1 g y si hay giroscopio.
-4. Entrena y evalúa:
+   Each line shows `OK` or `REVIEW`, with the duration, the actual sampling rate (it should be around 50 Hz), whether the acceleration is in m/s² or g, whether the magnitude at rest is ~1 g and whether there is a gyroscope.
+4. Train and evaluate:
    ```bash
    python run_own.py --data ./mis_grabaciones --out ./out_own --orientation-free
    ```
 
-**No hay que hacer nada más a los datos.** No quites la gravedad, no los filtres, no los recortes a mano (ya recorta 5 s por extremo) y no los normalices. Guarda los zips originales como copia.
+**Nothing else needs to be done to the data.** Do not remove gravity, do not filter it, do not trim it by hand (the code already trims 5 s at each end) and do not normalize it. Keep the original zips as a backup.
 

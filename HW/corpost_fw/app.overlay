@@ -1,7 +1,7 @@
-/* Ajustes del bus I2C para el BNO055 (cables largos, pull-ups desconocidos).
- * 1) Usa el periférico TWIM con EasyDMA en vez del TWI por CPU de la placa.
- * 2) Fuerza 100 kHz.
- * 3) Activa los pull-ups internos de SDA/SCL (~13 kΩ; ayudan, pero no sustituyen a 4,7 kΩ externos). */
+/* I2C bus settings for the BNO055 (long cables, unknown pull-ups).
+ * 1) Use the TWIM peripheral with EasyDMA instead of the board's CPU-driven TWI.
+ * 2) Force 100 kHz.
+ * 3) Enable the internal SDA/SCL pull-ups (~13 kΩ; they help, but do not replace external 4.7 kΩ ones). */
 &i2c0 {
 	compatible = "nordic,nrf-twim";
 	clock-frequency = <I2C_BITRATE_STANDARD>;

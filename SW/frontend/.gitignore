@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------
-# Frontend / app móvil (React Native, con o sin Expo)
+# Frontend / mobile app (React Native, with or without Expo)
 # ---------------------------------------------------------------
 node_modules/
 npm-debug.log*
@@ -28,15 +28,15 @@ ios/Pods/
 *.xcworkspace/xcuserdata/
 xcuserdata/
 
-# Secretos y locales
+# Secrets and local files
 .env
 .env.*
 !.env.example
 
-# Registros
+# Logs
 *.log
 
-# Editor / sistema
+# Editor / system
 .vscode/
 .idea/
 .DS_Store

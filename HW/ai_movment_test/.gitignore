@@ -1,9 +1,9 @@
 # ---------------------------------------------------------------
-# Datos: NO se suben al repositorio
+# Data: NOT uploaded to the repository
 # ---------------------------------------------------------------
-# Dataset público HAPT (~130 MB). Se descarga aparte (ver README).
+# Public HAPT dataset (~130 MB). It is downloaded separately (see README).
 /hapt/
-# Grabaciones propias del equipo (datos personales de las personas que graban)
+# The team's own recordings (personal data of the people recording)
 /exportaciones/
 /mis_grabaciones/
 
@@ -27,14 +27,14 @@ dist/
 tempCodeRunnerFile.py
 
 # ---------------------------------------------------------------
-# Secretos y locales
+# Secrets and local files
 # ---------------------------------------------------------------
 .env
 .env.*
 !.env.example
 .streamlit/secrets.toml
 
-# Editor / sistema
+# Editor / system
 .vscode/
 .idea/
 .DS_Store

@@ -17,7 +17,7 @@ dist/
 .coverage
 htmlcov/
 
-# Base de datos y volúmenes locales (PostgreSQL / TimescaleDB, SQLite de pruebas)
+# Local database and volumes (PostgreSQL / TimescaleDB, SQLite for tests)
 *.db
 *.sqlite
 *.sqlite3
@@ -25,17 +25,17 @@ pgdata/
 postgres-data/
 .docker-data/
 
-# Secretos: claves de API (p. ej. del LLM), contraseñas de la base de datos...
+# Secrets: API keys (e.g. for the LLM), database passwords...
 .env
 .env.*
 !.env.example
 *.pem
 *.key
 
-# Registros
+# Logs
 *.log
 
-# Editor / sistema
+# Editor / system
 .vscode/
 .idea/
 .DS_Store

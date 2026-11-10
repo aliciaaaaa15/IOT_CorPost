@@ -7,7 +7,7 @@
 #define RAD2DEG 57.29577951f
 
 static float ref[3] = {0.0f, 0.0f, 1000.0f};
-static volatile float tolerance_deg = TOLERANCE_DEG; /* la cambia la app por BLE */
+static volatile float tolerance_deg = TOLERANCE_DEG; /* changed by the app over BLE */
 
 void posture_set_tolerance(float deg)
 {
@@ -76,7 +76,7 @@ void posture_eval(const struct imu_sample *s, const bool *ok, int n, struct wind
 {
 	posture_window_stats(s, ok, n, r);
 
-	/* Filtro de movimiento PROVISIONAL (umbral). TODO: árbol de decisión. */
+	/* PROVISIONAL motion filter (threshold). TODO: decision tree. */
 	if (r->n_valid < MIN_VALID_SAMPLES || r->amag_std_mg > MOTION_STD_MG) {
 		r->status = POSTURE_INVALID;
 		return;

@@ -7,28 +7,28 @@
 #include <errno.h>
 #include <stdlib.h>
 
-/* Página 0 */
-#define REG_CHIP_ID     0x00 /* debe valer 0xA0 */
-#define REG_PAGE_ID     0x07 /* existe en ambas páginas */
+/* Page 0 */
+#define REG_CHIP_ID     0x00 /* must be 0xA0 */
+#define REG_PAGE_ID     0x07 /* exists on both pages */
 #define REG_ACC_DATA    0x08 /* X,Y,Z LSB/MSB */
 #define REG_GYR_DATA    0x14
 #define REG_UNIT_SEL    0x3B
 #define REG_OPR_MODE    0x3D
 #define REG_PWR_MODE    0x3E
 #define REG_SYS_TRIG    0x3F
-/* Página 1 */
-#define REG_ACC_CONFIG  0x08 /* bits 1:0 rango, 4:2 ancho de banda */
-#define REG_GYR_CONFIG0 0x0A /* bits 2:0 rango, 5:3 ancho de banda */
+/* Page 1 */
+#define REG_ACC_CONFIG  0x08 /* bits 1:0 range, 4:2 bandwidth */
+#define REG_GYR_CONFIG0 0x0A /* bits 2:0 range, 5:3 bandwidth */
 
 #define CHIP_ID         0xA0
 #define MODE_CONFIG     0x00
 #define MODE_ACCGYRO    0x05
-#define ACC_CFG         0x05 /* +-4 g, BW 15,63 Hz */
+#define ACC_CFG         0x05 /* +-4 g, BW 15.63 Hz */
 #define GYR_CFG         0x28 /* +-2000 dps, BW 12 Hz */
 
-/* Con el montaje actual (cables largos) las lecturas de >2 bytes seguidos se
-  corrompen; las de 2 bytes son fiables. Cada eje se lee en su propia
-  transacción, con reintentos y doble lectura de verificación. */
+/* With the current wiring (long cables), reads of more than 2 consecutive bytes get
+  corrupted; 2-byte reads are reliable. Each axis is read in its own
+  transaction, with retries and a verification double read. */
 #define READ_RETRIES    3
 #define MAX_DIFF        200
 
@@ -95,11 +95,11 @@ int bno055_init(const struct device *i2c)
 		return -ENODEV;
 	}
 
-	err |= wr(REG_OPR_MODE, MODE_CONFIG); /* los ajustes solo se aplican en CONFIG */
+	err |= wr(REG_OPR_MODE, MODE_CONFIG); /* settings are only applied in CONFIG mode */
 	k_msleep(25);
 	err |= wr(REG_PWR_MODE, 0x00);        /* normal */
-	err |= wr(REG_UNIT_SEL, 0x01);        /* acc en mg, gyro en dps */
-	err |= wr(REG_SYS_TRIG, 0x00);        /* reloj interno */
+	err |= wr(REG_UNIT_SEL, 0x01);        /* acc in mg, gyro in dps */
+	err |= wr(REG_SYS_TRIG, 0x00);        /* internal clock */
 	err |= wr(REG_PAGE_ID, 1);
 	err |= wr(REG_ACC_CONFIG, ACC_CFG);
 	err |= wr(REG_GYR_CONFIG0, GYR_CFG);

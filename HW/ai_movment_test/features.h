@@ -1,10 +1,10 @@
-/* features.h - Características orientation-free para ventana de 20 muestras a 10 Hz.
- * Orden (coincide con run_hapt.py --orientation-free / run_own.py --orientation-free):
+/* features.h - Orientation-free features for a window of 20 samples at 10 Hz.
+ * Order (matches run_hapt.py --orientation-free / run_own.py --orientation-free):
  *   f[0] acc_mag_std   f[1] acc_mag_range   f[2] gyro_mag_std
  *   f[3] gyro_mag_range f[4] angle_change   f[5] angle_max_dev
- * Unidades: aceleración en g, giroscopio en rad/s, ángulos en grados.
- * IMPORTANTE: si exportáis el árbol en modo --orientation-free, los índices del
- * decision_tree.h son los de esta lista de 6. */
+ * Units: acceleration in g, gyroscope in rad/s, angles in degrees.
+ * IMPORTANT: if the tree is exported in --orientation-free mode, the indices of
+ * decision_tree.h are those of this list of 6. */
 #pragma once
 #include <math.h>
 #define WIN_N 20
@@ -25,11 +25,11 @@ static void mag_stats(float m[WIN_N], float *std, float *range) {
     for (int i = 0; i < WIN_N; i++) { s += m[i]; if (m[i] < mn) mn = m[i]; if (m[i] > mx) mx = m[i]; }
     float mean = s / WIN_N, v = 0;
     for (int i = 0; i < WIN_N; i++) v += (m[i] - mean) * (m[i] - mean);
-    *std = sqrtf(v / WIN_N);      /* desviación estándar poblacional, igual que numpy */
+    *std = sqrtf(v / WIN_N);      /* population standard deviation, same as numpy */
     *range = mx - mn;
 }
 
-/* acc[i][3] en g, gyro[i][3] en rad/s. f: salida de 6 floats. */
+/* acc[i][3] in g, gyro[i][3] in rad/s. f: output of 6 floats. */
 static void compute_features(const float acc[WIN_N][3], const float gyro[WIN_N][3], float f[6]) {
     float am[WIN_N], gm[WIN_N], mean[3] = {0, 0, 0};
     for (int i = 0; i < WIN_N; i++) {
@@ -46,5 +46,5 @@ static void compute_features(const float acc[WIN_N][3], const float gyro[WIN_N][
 
 /* Uso:
  *   float f[6]; compute_features(acc, gyro, f);
- *   if (window_is_moving(f)) { descartar lectura } else { comparar ángulo con tolerancia }
+ *   if (window_is_moving(f)) { discard the reading } else { compare the angle with the tolerance }
  */

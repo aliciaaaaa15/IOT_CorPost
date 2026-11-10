@@ -1,0 +1,13 @@
+# Kept out of the image: virtual environment, secrets, caches and git
+.venv/
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+.git/
+.gitignore
+.vscode/
+.idea/
+.pytest_cache/
+*.log

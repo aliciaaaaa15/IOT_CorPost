@@ -1,15 +1,15 @@
-/* BLE de CorPost.
+/* CorPost BLE.
  *
- * - GAP: el nRF52 es periférico. Se anuncia como "CorPost" con el UUID del servicio.
- * - GATT: servicio propio con tres características (D3):
- *     Reading (Notify)  dispositivo -> app, paquete de 24 B
- *     Command (Write)   app -> dispositivo, opcode + parámetro
- *     Time    (Write)   app -> dispositivo, uint32 LE con la hora UTC
- * - Seguridad: LE Secure Connections con passkey (nivel 4: cifrado AES-CCM y
- *   autenticado contra MITM). Todas las características exigen ese nivel.
- *   Bonding guardado en flash y un solo móvil emparejado a la vez.
- * - Búfer circular de lecturas: si no se pueden enviar, se guardan y se envían en
- *   ráfaga al reconectar. */
+ * - GAP: the nRF52 is a peripheral. It advertises as "CorPost" with the service UUID.
+ * - GATT: custom service with three characteristics (D3):
+ *     Reading (Notify)  device -> app, 24 B packet
+ *     Command (Write)   app -> device, opcode + parameter
+ *     Time    (Write)   app -> device, uint32 LE with the UTC time
+ * - Security: LE Secure Connections with passkey (level 4: AES-CCM encryption and
+ *   authenticated against MITM). All characteristics require that level.
+ *   Bonding stored in flash and only one phone paired at a time.
+ * - Circular reading buffer: readings that cannot be sent are stored and sent as a
+ *   burst on reconnection. */
 #include "ble.h"
 #include "config.h"
 
@@ -26,7 +26,7 @@
 #include <math.h>
 
 /* ---------------------------------------------------------------------------
- * UUIDs (128 bits, propios). Base aleatoria bd5fXXXX-319b-420e-ae78-678d1c7cf46d
+ * UUIDs (128 bits, custom). Random base bd5fXXXX-319b-420e-ae78-678d1c7cf46d
  * --------------------------------------------------------------------------- */
 #define CORPOST_UUID(n) BT_UUID_128_ENCODE(0xbd5f0000 + (n), 0x319b, 0x420e, 0xae78, 0x678d1c7cf46d)
 
@@ -39,13 +39,13 @@ static const struct bt_uuid_128 uuid_time = BT_UUID_INIT_128(CORPOST_UUID(4));
 static const struct ble_cmd_handlers *cmd;
 
 /* ---------------------------------------------------------------------------
- * Hora UTC. El nRF no tiene reloj real: la app escribe la hora UTC al conectar y
- * desde ahí se cuenta con el uptime (que lo lleva el RTC del chip).
+ * UTC time. The nRF has no real-time clock: the app writes the UTC time on connect and
+ * from then on it is tracked with the uptime (kept by the chip's RTC).
  * --------------------------------------------------------------------------- */
 static struct k_spinlock time_lock;
 static bool time_set;
-static uint32_t utc_ref;       /* hora UTC recibida (s) */
-static int64_t utc_ref_uptime; /* uptime en ese momento (ms) */
+static uint32_t utc_ref;       /* UTC time received (s) */
+static int64_t utc_ref_uptime; /* uptime at that moment (ms) */
 
 static bool uptime_to_utc(int64_t uptime_ms, uint32_t *utc)
 {
@@ -61,10 +61,10 @@ static bool uptime_to_utc(int64_t uptime_ms, uint32_t *utc)
 }
 
 /* ---------------------------------------------------------------------------
- * Búfer circular de lecturas (D3: 50 entradas, sobrescribe la más antigua).
- * Solo lo usa el hilo principal (ble_submit / ble_flush), así que no necesita lock.
- * Guarda el uptime y no la hora UTC: así las lecturas tomadas antes de recibir la
- * hora reciben su timestamp correcto cuando la app la escribe.
+ * Circular reading buffer (D3: 50 entries, overwrites the oldest one).
+ * Only the main thread uses it (ble_submit / ble_flush), so it needs no lock.
+ * It stores the uptime and not the UTC time: this way, readings taken before the
+ * time is received get their correct timestamp once the app writes it.
  * --------------------------------------------------------------------------- */
 struct entry {
 	int16_t acc[3];
@@ -75,7 +75,7 @@ struct entry {
 };
 
 static struct entry ring[BUFFER_SIZE];
-static int ring_head; /* siguiente posición libre */
+static int ring_head; /* next free position */
 static int ring_count;
 
 static int16_t to_i16(float v)
@@ -95,13 +95,13 @@ void ble_submit(const struct window_result *r, int64_t uptime_ms)
 	struct entry *e = &ring[ring_head];
 
 	if (ring_count == BUFFER_SIZE) {
-		printk("  bufer lleno: se descarta la lectura mas antigua\n");
+		printk("  buffer full: the oldest reading is discarded\n");
 	} else {
 		ring_count++;
 	}
 	for (int k = 0; k < 3; k++) {
 		e->acc[k] = to_i16(r->acc_mean[k]);           /* mg */
-		e->gyr[k] = to_i16(r->gyr_mean_dps[k] * 16.0f); /* 1/16 dps (LSB del BNO055) */
+		e->gyr[k] = to_i16(r->gyr_mean_dps[k] * 16.0f); /* 1/16 dps (BNO055 LSB) */
 	}
 	e->angle = (r->status == POSTURE_INVALID) ? 0.0f : r->angle_deg;
 	e->status = (uint8_t)r->status;
@@ -116,11 +116,11 @@ int ble_pending(void)
 
 uint16_t ble_crc16(const uint8_t *data, int len)
 {
-	/* CRC-16/CCITT-FALSE = crc16_itu_t con semilla 0xFFFF ("123456789" -> 0x29B1) */
+	/* CRC-16/CCITT-FALSE = crc16_itu_t with seed 0xFFFF ("123456789" -> 0x29B1) */
 	return crc16_itu_t(0xFFFF, data, len);
 }
 
-/* Paquete de 24 B, little-endian (D3, tabla del paquete de telemetría) */
+/* 24 B packet, little-endian (D3, telemetry packet table) */
 static void encode(const struct entry *e, uint32_t ts, uint8_t out[BLE_READING_LEN])
 {
 	uint32_t angle_bits;
@@ -138,7 +138,7 @@ static void encode(const struct entry *e, uint32_t ts, uint8_t out[BLE_READING_L
 }
 
 /* ---------------------------------------------------------------------------
- * Servicio GATT
+ * GATT service
  * --------------------------------------------------------------------------- */
 static ssize_t write_command(struct bt_conn *conn, const struct bt_gatt_attr *attr,
 			     const void *buf, uint16_t len, uint16_t offset, uint8_t flags)
@@ -162,7 +162,7 @@ static ssize_t write_command(struct bt_conn *conn, const struct bt_gatt_attr *at
 		if (s < MEASURE_INTERVAL_MIN_S || s > MEASURE_INTERVAL_MAX_S) {
 			return BT_GATT_ERR(BT_ATT_ERR_VALUE_NOT_ALLOWED);
 		}
-		printk("BLE comando: intervalo = %u s\n", s);
+		printk("BLE command: interval = %u s\n", s);
 		cmd->set_interval(s);
 		break;
 	}
@@ -173,25 +173,25 @@ static ssize_t write_command(struct bt_conn *conn, const struct bt_gatt_attr *at
 		if (b[1] < TOLERANCE_MIN_DEG || b[1] > TOLERANCE_MAX_DEG) {
 			return BT_GATT_ERR(BT_ATT_ERR_VALUE_NOT_ALLOWED);
 		}
-		printk("BLE comando: tolerancia = %u grados\n", b[1]);
+		printk("BLE command: tolerance = %u degrees\n", b[1]);
 		cmd->set_tolerance(b[1]);
 		break;
 	case CMD_RECALIBRATE:
 		if (len != 1) {
 			return BT_GATT_ERR(BT_ATT_ERR_INVALID_ATTRIBUTE_LEN);
 		}
-		printk("BLE comando: recalibrar\n");
+		printk("BLE command: recalibrate\n");
 		cmd->recalibrate();
 		break;
 	case CMD_SET_VIBRATION:
 		if (len != 2 || b[1] > 1) {
 			return BT_GATT_ERR(BT_ATT_ERR_VALUE_NOT_ALLOWED);
 		}
-		printk("BLE comando: vibracion %s\n", b[1] ? "ON" : "OFF");
+		printk("BLE command: vibration %s\n", b[1] ? "ON" : "OFF");
 		cmd->set_vibration(b[1] != 0);
 		break;
 	default:
-		printk("BLE comando desconocido 0x%02x\n", b[0]);
+		printk("BLE unknown command 0x%02x\n", b[0]);
 		return BT_GATT_ERR(BT_ATT_ERR_VALUE_NOT_ALLOWED);
 	}
 	return len;
@@ -214,22 +214,22 @@ static ssize_t write_time(struct bt_conn *conn, const struct bt_gatt_attr *attr,
 	time_set = true;
 	k_spin_unlock(&time_lock, key);
 
-	printk("BLE hora UTC = %u\n", sys_get_le32(buf));
+	printk("BLE UTC time = %u\n", sys_get_le32(buf));
 	return len;
 }
 
 static void reading_ccc_changed(const struct bt_gatt_attr *attr, uint16_t value)
 {
-	printk("BLE notificaciones de Reading %s\n",
-	       value == BT_GATT_CCC_NOTIFY ? "activadas" : "desactivadas");
+	printk("BLE Reading notifications %s\n",
+	       value == BT_GATT_CCC_NOTIFY ? "enabled" : "disabled");
 }
 
-/* Permisos *_AUTHEN: solo con enlace cifrado y autenticado (emparejado con passkey).
- * Los CUD (nombres legibles en nRF Connect) son públicos: no contienen datos. */
+/* *_AUTHEN permissions: only with an encrypted and authenticated link (paired with passkey).
+ * The CUDs (human-readable names in nRF Connect) are public: they contain no data. */
 BT_GATT_SERVICE_DEFINE(corpost_svc,
 	BT_GATT_PRIMARY_SERVICE(&uuid_service),
 
-	/* attrs[1] declaración, attrs[2] valor */
+	/* attrs[1] declaration, attrs[2] value */
 	BT_GATT_CHARACTERISTIC(&uuid_reading.uuid, BT_GATT_CHRC_NOTIFY,
 			       BT_GATT_PERM_NONE, NULL, NULL, NULL),
 	BT_GATT_CCC(reading_ccc_changed, BT_GATT_PERM_READ_AUTHEN | BT_GATT_PERM_WRITE_AUTHEN),
@@ -247,7 +247,7 @@ BT_GATT_SERVICE_DEFINE(corpost_svc,
 #define READING_ATTR (&corpost_svc.attrs[1])
 
 /* ---------------------------------------------------------------------------
- * Advertising: flags + UUID del servicio + nombre (3 + 18 + 9 = 30 de 31 B)
+ * Advertising: flags + service UUID + name (3 + 18 + 9 = 30 of 31 B)
  * --------------------------------------------------------------------------- */
 static const struct bt_data ad[] = {
 	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
@@ -259,18 +259,18 @@ static struct k_work adv_work;
 
 static void adv_work_handler(struct k_work *work)
 {
-	/* Conectable, intervalo 100-150 ms (FAST_2) */
+	/* Connectable, interval 100-150 ms (FAST_2) */
 	int err = bt_le_adv_start(BT_LE_ADV_CONN_FAST_2, ad, ARRAY_SIZE(ad), NULL, 0);
 
 	if (err) {
-		printk("BLE: no se pudo iniciar el advertising (%d)\n", err);
+		printk("BLE: could not start advertising (%d)\n", err);
 		return;
 	}
-	printk("BLE: anunciandose como \"%s\"\n", CONFIG_BT_DEVICE_NAME);
+	printk("BLE: advertising as \"%s\"\n", CONFIG_BT_DEVICE_NAME);
 }
 
 /* ---------------------------------------------------------------------------
- * Conexión
+ * Connection
  * --------------------------------------------------------------------------- */
 static K_MUTEX_DEFINE(conn_lock);
 static struct bt_conn *cur_conn;
@@ -286,7 +286,7 @@ static void print_addr(const char *msg, struct bt_conn *conn)
 static void print_params(const char *msg, uint32_t interval_us, uint16_t latency,
 			 uint16_t timeout_10ms)
 {
-	printk("%s intervalo=%u.%02u ms latencia=%u timeout=%u ms\n", msg,
+	printk("%s interval=%u.%02u ms latency=%u timeout=%u ms\n", msg,
 	       interval_us / 1000, (interval_us % 1000) / 10, latency, timeout_10ms * 10);
 }
 
@@ -295,12 +295,12 @@ static void connected(struct bt_conn *conn, uint8_t err)
 	struct bt_conn_info info;
 
 	if (err) {
-		printk("BLE: conexion fallida 0x%02x %s\n", err, bt_hci_err_to_str(err));
+		printk("BLE: connection failed 0x%02x %s\n", err, bt_hci_err_to_str(err));
 		return;
 	}
-	print_addr("BLE: conectado a", conn);
+	print_addr("BLE: connected to", conn);
 	if (bt_conn_get_info(conn, &info) == 0) {
-		print_params("BLE: parametros iniciales", info.le.interval_us, info.le.latency,
+		print_params("BLE: initial parameters", info.le.interval_us, info.le.latency,
 			     info.le.timeout);
 	}
 
@@ -308,22 +308,22 @@ static void connected(struct bt_conn *conn, uint8_t err)
 	cur_conn = bt_conn_ref(conn);
 	k_mutex_unlock(&conn_lock);
 
-	/* Pide seguridad nivel 4 desde el principio: si el móvil ya está emparejado
-	 * solo se recifra; si no, empieza el emparejamiento con passkey.
-	 * Se usa un int y no el uint8_t 'err' del callback: el error es negativo
-	 * (p. ej. -ENOMEM = -12, que en un uint8_t se imprimía como 244). */
+	/* Request security level 4 from the start: if the phone is already paired it is
+	 * only re-encrypted; otherwise, passkey pairing starts.
+	 * An int is used rather than the callback's uint8_t 'err': the error is negative
+	 * (e.g. -ENOMEM = -12, which would print as 244 as a uint8_t). */
 	int sec_err = bt_conn_set_security(conn, BT_SECURITY_L4);
 
 	if (sec_err) {
-		printk("BLE: error al pedir seguridad (%d)%s\n", sec_err,
-		       sec_err == -ENOMEM ? ": no queda hueco para otro bond (CONFIG_BT_MAX_PAIRED)"
+		printk("BLE: error requesting security (%d)%s\n", sec_err,
+		       sec_err == -ENOMEM ? ": no room for another bond (CONFIG_BT_MAX_PAIRED)"
 					  : "");
 	}
 }
 
 static void disconnected(struct bt_conn *conn, uint8_t reason)
 {
-	printk("BLE: desconectado, motivo 0x%02x %s\n", reason, bt_hci_err_to_str(reason));
+	printk("BLE: disconnected, reason 0x%02x %s\n", reason, bt_hci_err_to_str(reason));
 
 	k_mutex_lock(&conn_lock, K_FOREVER);
 	if (cur_conn == conn) {
@@ -333,7 +333,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason)
 	k_mutex_unlock(&conn_lock);
 }
 
-/* La conexión anterior ya está liberada: se vuelve a anunciar */
+/* The previous connection is already released: advertise again */
 static void recycled(void)
 {
 	k_work_submit(&adv_work);
@@ -342,19 +342,19 @@ static void recycled(void)
 static void le_param_updated(struct bt_conn *conn, uint16_t interval, uint16_t latency,
 			     uint16_t timeout)
 {
-	print_params("BLE: parametros actualizados", interval * 1250U, latency, timeout);
+	print_params("BLE: updated parameters", interval * 1250U, latency, timeout);
 }
 
 static void security_changed(struct bt_conn *conn, bt_security_t level,
 			     enum bt_security_err err)
 {
 	if (err) {
-		printk("BLE: fallo de seguridad, nivel %u, error %d %s\n", level, err,
+		printk("BLE: security failure, level %u, error %d %s\n", level, err,
 		       bt_security_err_to_str(err));
 		return;
 	}
-	printk("BLE: seguridad nivel %u%s\n", level,
-	       level >= BT_SECURITY_L4 ? " (LE Secure Connections, autenticado y cifrado)" : "");
+	printk("BLE: security level %u%s\n", level,
+	       level >= BT_SECURITY_L4 ? " (LE Secure Connections, authenticated and encrypted)" : "");
 }
 
 BT_CONN_CB_DEFINE(conn_callbacks) = {
@@ -367,7 +367,7 @@ BT_CONN_CB_DEFINE(conn_callbacks) = {
 
 static void mtu_updated(struct bt_conn *conn, uint16_t tx, uint16_t rx)
 {
-	printk("BLE: MTU actualizado tx=%u rx=%u\n", tx, rx);
+	printk("BLE: MTU updated tx=%u rx=%u\n", tx, rx);
 }
 
 static struct bt_gatt_cb gatt_callbacks = {
@@ -375,32 +375,32 @@ static struct bt_gatt_cb gatt_callbacks = {
 };
 
 /* ---------------------------------------------------------------------------
- * Emparejamiento: el nRF "muestra" el passkey (por RTT) y el usuario lo teclea en
- * el móvil. Capacidad de E/S = DisplayOnly -> método Passkey Entry -> protegido
- * contra MITM.
+ * Pairing: the nRF "displays" the passkey (over RTT) and the user types it on the
+ * phone. I/O capability = DisplayOnly -> Passkey Entry method -> protected
+ * against MITM.
  * --------------------------------------------------------------------------- */
 static void auth_passkey_display(struct bt_conn *conn, unsigned int passkey)
 {
 	printk("\n=============================================\n");
-	printk("  CODIGO DE EMPAREJAMIENTO: %06u\n", passkey);
-	printk("  Introducelo en el movil\n");
+	printk("  PAIRING CODE: %06u\n", passkey);
+	printk("  Enter it on the phone\n");
 	printk("=============================================\n\n");
 }
 
 static void auth_cancel(struct bt_conn *conn)
 {
-	printk("BLE: emparejamiento cancelado\n");
+	printk("BLE: pairing cancelled\n");
 }
 
 static void pairing_complete(struct bt_conn *conn, bool bonded)
 {
-	printk("BLE: emparejamiento completado%s\n", bonded ? ", bond guardado en flash" : "");
+	printk("BLE: pairing complete%s\n", bonded ? ", bond saved to flash" : "");
 }
 
 static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason)
 {
-	printk("BLE: emparejamiento fallido: %d %s\n", reason, bt_security_err_to_str(reason));
-	printk("     (si ya hay otro movil emparejado, borra el bond con el Boton 2)\n");
+	printk("BLE: pairing failed: %d %s\n", reason, bt_security_err_to_str(reason));
+	printk("     (if another phone is already paired, delete the bond with Button 2)\n");
 }
 
 static struct bt_conn_auth_cb auth_callbacks = {
@@ -422,19 +422,19 @@ static void count_bond(const struct bt_bond_info *info, void *user_data)
 	(*(int *)user_data)++;
 }
 
-/* Imprime los bonds guardados y devuelve cuántos hay */
+/* Print the stored bonds and return how many there are */
 static int list_bonds(void)
 {
 	int bonds = 0;
 
 	bt_foreach_bond(BT_ID_DEFAULT, count_bond, &bonds);
-	printk("BLE: %d movil(es) emparejado(s) guardado(s) (maximo %d)\n", bonds,
+	printk("BLE: %d paired phone(s) stored (max %d)\n", bonds,
 	       CONFIG_BT_MAX_PAIRED);
 	return bonds;
 }
 
 /* ---------------------------------------------------------------------------
- * API pública
+ * Public API
  * --------------------------------------------------------------------------- */
 int ble_init(const struct ble_cmd_handlers *handlers)
 {
@@ -445,17 +445,17 @@ int ble_init(const struct ble_cmd_handlers *handlers)
 	err = bt_conn_auth_cb_register(&auth_callbacks);
 	err |= bt_conn_auth_info_cb_register(&auth_info_callbacks);
 	if (err) {
-		printk("BLE: error registrando callbacks de seguridad\n");
+		printk("BLE: error registering security callbacks\n");
 		return -EIO;
 	}
 	bt_gatt_cb_register(&gatt_callbacks);
 
 	err = bt_enable(NULL);
 	if (err) {
-		printk("BLE: bt_enable fallo (%d)\n", err);
+		printk("BLE: bt_enable failed (%d)\n", err);
 		return err;
 	}
-	/* Carga de flash los bonds (claves) y suscripciones guardadas */
+	/* Load the stored bonds (keys) and subscriptions from flash */
 	settings_load();
 
 	list_bonds();
@@ -465,7 +465,7 @@ int ble_init(const struct ble_cmd_handlers *handlers)
 	return 0;
 }
 
-/* El enlace está listo para enviar lecturas */
+/* The link is ready to send readings */
 static bool link_ready(struct bt_conn *conn)
 {
 	bool has_time;
@@ -476,8 +476,8 @@ static bool link_ready(struct bt_conn *conn)
 
 	return bt_conn_get_security(conn) >= BT_SECURITY_L4 &&
 	       bt_gatt_is_subscribed(conn, READING_ATTR, BT_GATT_CCC_NOTIFY) &&
-	       bt_gatt_get_mtu(conn) >= BLE_READING_LEN + 3 && /* 3 B de cabecera ATT */
-	       has_time; /* sin hora, el timestamp sería 0 y la app lo deduplicaría */
+	       bt_gatt_get_mtu(conn) >= BLE_READING_LEN + 3 && /* 3 B of ATT header */
+	       has_time; /* without time, the timestamp would be 0 and the app would deduplicate it */
 }
 
 int ble_flush(void)
@@ -506,9 +506,9 @@ int ble_flush(void)
 		uptime_to_utc(ring[tail].uptime_ms, &ts);
 		encode(&ring[tail], ts, pkt);
 
-		/* Desde el hilo principal, si no hay buffers libres, bt_gatt_notify ESPERA a
-		 * que se libere uno (la ráfaga va al ritmo del enlace). Devuelve error si la
-		 * conexión se cae: la lectura se queda en el búfer para la próxima vez. */
+		/* From the main thread, if there are no free buffers, bt_gatt_notify WAITS
+		 * until one is released (the burst goes at the pace of the link). It returns an
+		 * error if the connection drops: the reading stays in the buffer for next time. */
 		if (bt_gatt_notify(conn, READING_ATTR, pkt, sizeof(pkt)) != 0) {
 			break;
 		}
@@ -518,7 +518,7 @@ int ble_flush(void)
 	bt_conn_unref(conn);
 
 	if (sent > 0) {
-		printk("  BLE: %d lectura(s) enviada(s), %d pendiente(s)\n", sent, ring_count);
+		printk("  BLE: %d reading(s) sent, %d pending\n", sent, ring_count);
 	}
 	return sent;
 }
@@ -533,6 +533,6 @@ void ble_clear_bonds(void)
 
 	int err = bt_unpair(BT_ID_DEFAULT, BT_ADDR_LE_ANY);
 
-	printk("BLE: emparejamientos borrados%s\n", err ? " (ERROR)" : "");
-	list_bonds(); /* comprobación: debe salir 0 */
+	printk("BLE: pairings deleted%s\n", err ? " (ERROR)" : "");
+	list_bonds(); /* check: must be 0 */
 }

@@ -1,9 +1,9 @@
 """
-run_hapt.py - Pipeline completo sobre el dataset HAPT.
+run_hapt.py - Complete pipeline on the HAPT dataset.
 
-Uso:
-    python run_hapt.py --data ./hapt            # carpeta con RawData/ dentro
-Salidas (en ./out):
+Usage:
+    python run_hapt.py --data ./hapt            # folder containing RawData/
+Outputs (in ./out):
     dataset_windows.npz, resultados.txt, confusion_*.png, arbol.png,
     importancias.png, decision_tree.h
 """
@@ -20,20 +20,20 @@ import matplotlib.pyplot as plt
 from har_common import (FS_TARGET, FEATURE_NAMES, downsample, downsample_labels,
                         make_windows, ThresholdBaseline)
 
-ACT = {1: "andar", 2: "subir_escaleras", 3: "bajar_escaleras", 4: "sentado",
-       5: "de_pie", 6: "tumbado", 7: "de_pie->sentado", 8: "sentado->de_pie",
-       9: "sentado->tumbado", 10: "tumbado->sentado", 11: "de_pie->tumbado",
-       12: "tumbado->de_pie"}
+ACT = {1: "walking", 2: "stairs_up", 3: "stairs_down", 4: "sitting",
+       5: "standing", 6: "lying", 7: "stand->sit", 8: "sit->stand",
+       9: "sit->lie", 10: "lie->sit", 11: "stand->lie",
+       12: "lie->stand"}
 
-# ---- Decisión de etiquetado (fijadla antes y no la cambiéis a posteriori) ----
-VALID_ACTS = {4, 5}                 # sentado, de pie quieto
-DROP_ACTS = {6, 9, 10, 11, 12}      # tumbado y transiciones que implican tumbarse:
-                                    # no ocurren con un usuario sentado en su mesa
-# Movimiento (no válida): 1,2,3 (andar), 7 (de pie->sentado), 8 (sentado->de pie)
+# ---- Labeling decision (fix it beforehand and do not change it afterwards) ----
+VALID_ACTS = {4, 5}                 # sitting, standing still
+DROP_ACTS = {6, 9, 10, 11, 12}      # lying and transitions that involve lying down:
+                                    # they do not happen with a user sitting at a desk
+# Motion (not valid): 1,2,3 (walking), 7 (stand->sit), 8 (sit->stand)
 FS_RAW = 50
 PURITY = 0.8
-TRIM_S = 1.0   # segundos que se recortan al inicio/fin de cada segmento etiquetado
-               # (el etiquetado por vídeo es impreciso en los bordes)
+TRIM_S = 1.0   # seconds trimmed at the start/end of each labeled segment
+               # (video-based labeling is imprecise at the edges)
 
 
 def build_dataset(root):
@@ -43,16 +43,16 @@ def build_dataset(root):
     for (exp, user), seg in lab_df.groupby(["exp", "user"]):
         f_acc = os.path.join(root, "RawData", f"acc_exp{exp:02d}_user{user:02d}.txt")
         f_gyr = os.path.join(root, "RawData", f"gyro_exp{exp:02d}_user{user:02d}.txt")
-        acc = np.loadtxt(f_acc)       # en g, incluye gravedad
+        acc = np.loadtxt(f_acc)       # in g, includes gravity
         gyr = np.loadtxt(f_gyr)       # rad/s
         n = min(len(acc), len(gyr))
         lab = np.zeros(n, dtype=int)
         for _, r in seg.iterrows():
             if r.act in DROP_ACTS:
                 continue
-            s = int(r.s) - 1 + int(TRIM_S * FS_RAW)    # labels.txt es 1-indexado
+            s = int(r.s) - 1 + int(TRIM_S * FS_RAW)    # labels.txt is 1-indexed
             e = int(r.e) - int(TRIM_S * FS_RAW)
-            if r.act in (7, 8):                        # transiciones cortas: no recortar
+            if r.act in (7, 8):                        # short transitions: do not trim
                 s, e = int(r.s) - 1, int(r.e)
             lab[max(s, 0):e] = r.act
         a = downsample(acc[:n], FS_RAW, FS_TARGET)
@@ -67,8 +67,8 @@ def build_dataset(root):
 
 
 def metrics(y_true_inv, y_pred_inv):
-    """1 = no válida (movimiento). Devuelve sensibilidad a movimiento,
-    tasa de quietas descartadas, exactitud."""
+    """1 = not valid (motion). Returns the sensitivity to motion,
+    the rate of still windows discarded, and the accuracy."""
     cm = confusion_matrix(y_true_inv, y_pred_inv, labels=[0, 1])
     tn, fp, fn, tp = cm.ravel()
     return dict(cm=cm,
@@ -78,7 +78,7 @@ def metrics(y_true_inv, y_pred_inv):
 
 
 def loso(X, y_inv, groups, make_model, is_baseline=False):
-    """Leave-one-person-out. Devuelve predicciones por ventana."""
+    """Leave-one-person-out. Returns per-window predictions."""
     pred = np.zeros_like(y_inv)
     for tr, te in LeaveOneGroupOut().split(X, y_inv, groups):
         m = make_model()
@@ -90,9 +90,9 @@ def loso(X, y_inv, groups, make_model, is_baseline=False):
 def plot_cm(cm, title, path):
     fig, ax = plt.subplots(figsize=(3.6, 3.2))
     ax.imshow(cm, cmap="Blues")
-    ax.set_xticks([0, 1]); ax.set_xticklabels(["válida", "no válida"])
-    ax.set_yticks([0, 1]); ax.set_yticklabels(["quieto", "movimiento"])
-    ax.set_xlabel("predicción"); ax.set_ylabel("real"); ax.set_title(title, fontsize=9)
+    ax.set_xticks([0, 1]); ax.set_xticklabels(["valid", "not valid"])
+    ax.set_yticks([0, 1]); ax.set_yticklabels(["still", "motion"])
+    ax.set_xlabel("predicted"); ax.set_ylabel("actual"); ax.set_title(title, fontsize=9)
     for i in range(2):
         for j in range(2):
             ax.text(j, i, cm[i, j], ha="center", va="center",
@@ -101,13 +101,13 @@ def plot_cm(cm, title, path):
 
 
 def export_tree_to_c(tree, feature_names, path, fn_name="window_is_moving"):
-    """Exporta un DecisionTreeClassifier binario a una función C (if/else).
-    Devuelve 1 si la ventana es NO válida (movimiento), 0 si es válida."""
+    """Export a binary DecisionTreeClassifier to a C function (if/else).
+    Returns 1 if the window is NOT valid (motion), 0 if it is valid."""
     t = tree.tree_
-    lines = ["/* Autogenerado. Entrada: vector de características en el orden:"]
+    lines = ["/* Autogenerated. Input: feature vector in the order:"]
     for i, n in enumerate(feature_names):
         lines.append(f" *   f[{i}] = {n}")
-    lines.append(" * Devuelve 1 = ventana NO válida (movimiento), 0 = válida. */")
+    lines.append(" * Returns 1 = window NOT valid (motion), 0 = valid. */")
     lines.append(f"static inline int {fn_name}(const float *f) {{")
 
     def rec(node, ind):
@@ -132,7 +132,7 @@ def main():
     ap.add_argument("--data", default="./hapt")
     ap.add_argument("--out", default="./out")
     ap.add_argument("--orientation-free", action="store_true",
-                    help="excluye características por eje (no dependen de cómo esté colocado el sensor)")
+                    help="exclude per-axis features (they do not depend on how the sensor is placed)")
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
     log = open(os.path.join(args.out, "resultados.txt"), "w", encoding="utf-8")
@@ -153,26 +153,26 @@ def main():
         drop = {"acc_x_std", "acc_y_std", "acc_z_std", "acc_max_axis_range"}
         keep = [i for i, n in enumerate(names) if n not in drop]
         X = X[:, keep]; names = [names[i] for i in keep]
-        P("(modo independiente de orientación: " + ", ".join(names) + ")")
+        P("(orientation-independent mode: " + ", ".join(names) + ")")
 
-    y_inv = (~np.isin(y, list(VALID_ACTS))).astype(int)   # 1 = movimiento
-    P(f"Ventanas: {len(y)} | personas: {len(np.unique(groups))}")
-    P(f"  válidas (quieto): {(y_inv == 0).sum()} | no válidas (movimiento): {(y_inv == 1).sum()}")
+    y_inv = (~np.isin(y, list(VALID_ACTS))).astype(int)   # 1 = motion
+    P(f"Windows: {len(y)} | people: {len(np.unique(groups))}")
+    P(f"  valid (still): {(y_inv == 0).sum()} | not valid (motion): {(y_inv == 1).sum()}")
     for a in sorted(np.unique(y)):
         P(f"    {a:>2} {ACT[a]:<18} {int((y == a).sum())}")
 
-    # ---------- Baseline: umbral sobre std de la magnitud ----------
+    # ---------- Baseline: threshold on the std of the magnitude ----------
     pred_b = loso(X, y_inv, groups, lambda: ThresholdBaseline(0))
     mb = metrics(y_inv, pred_b)
     thr_all = ThresholdBaseline(0).fit(X, y_inv).thr
-    P("\n=== BASELINE: umbral en acc_mag_std (leave-one-person-out) ===")
-    P(f"  umbral con todos los datos: {thr_all:.4f} g")
-    P(f"  exactitud {mb['acc']:.3f} | movimiento detectado {mb['sens_mov']:.3f} | "
-      f"quietas descartadas {mb['quietas_descartadas']:.3f}")
+    P("\n=== BASELINE: threshold on acc_mag_std (leave-one-person-out) ===")
+    P(f"  threshold with all the data: {thr_all:.4f} g")
+    P(f"  accuracy {mb['acc']:.3f} | motion detected {mb['sens_mov']:.3f} | "
+      f"still discarded {mb['quietas_descartadas']:.3f}")
     P("  matriz [[TN FP],[FN TP]]:", mb["cm"].tolist())
 
-    # ---------- Árbol: elegir profundidad con LOSO ----------
-    P("\n=== ÁRBOL (leave-one-person-out) ===")
+    # ---------- Tree: choose the depth with LOSO ----------
+    P("\n=== TREE (leave-one-person-out) ===")
     best_depth, best_score = None, -1
     for depth in (2, 3, 4, 5, 6):
         mk = lambda d=depth: DecisionTreeClassifier(max_depth=d, class_weight="balanced",
@@ -180,74 +180,74 @@ def main():
         p = loso(X, y_inv, groups, mk)
         m = metrics(y_inv, p)
         bal = (m["sens_mov"] + 1 - m["quietas_descartadas"]) / 2
-        P(f"  depth={depth}: acc {m['acc']:.3f} | mov detectado {m['sens_mov']:.3f} | "
-          f"quietas descartadas {m['quietas_descartadas']:.3f}")
-        if bal > best_score + 0.002:     # prefiere el más pequeño si empatan
+        P(f"  depth={depth}: acc {m['acc']:.3f} | motion detected {m['sens_mov']:.3f} | "
+          f"still discarded {m['quietas_descartadas']:.3f}")
+        if bal > best_score + 0.002:     # prefers the smallest one if there is a tie
             best_score, best_depth = bal, depth
-    P(f"  -> profundidad elegida: {best_depth}")
+    P(f"  -> chosen depth: {best_depth}")
 
     mk = lambda: DecisionTreeClassifier(max_depth=best_depth, class_weight="balanced",
                                         min_samples_leaf=10, random_state=0)
     pred_t = loso(X, y_inv, groups, mk)
     mt = metrics(y_inv, pred_t)
-    P(f"  exactitud {mt['acc']:.3f} | movimiento detectado {mt['sens_mov']:.3f} | "
-      f"quietas descartadas {mt['quietas_descartadas']:.3f}")
+    P(f"  accuracy {mt['acc']:.3f} | motion detected {mt['sens_mov']:.3f} | "
+      f"still discarded {mt['quietas_descartadas']:.3f}")
     P("  matriz [[TN FP],[FN TP]]:", mt["cm"].tolist())
 
-    # Rendimiento por persona (¿resultado similar con alguien nuevo?)
+    # Per-person performance (is the result similar for a new person?)
     rows = []
     for u in np.unique(groups):
         k = groups == u
         m = metrics(y_inv[k], pred_t[k])
         rows.append((u, m["sens_mov"], m["quietas_descartadas"]))
     r = np.array(rows)
-    P(f"\n  Por persona: sensibilidad mov. media {r[:,1].mean():.3f} "
-      f"(mín {r[:,1].min():.3f}, persona {int(r[r[:,1].argmin(),0])}) | "
-      f"quietas descartadas media {r[:,2].mean():.3f} (máx {r[:,2].max():.3f})")
+    P(f"\n  Per person: mean motion sensitivity {r[:,1].mean():.3f} "
+      f"(min {r[:,1].min():.3f}, person {int(r[r[:,1].argmin(),0])}) | "
+      f"mean still discarded {r[:,2].mean():.3f} (max {r[:,2].max():.3f})")
 
-    # Errores por tipo de actividad
-    P("\n=== Tasa de error por actividad (árbol vs baseline) ===")
-    P(f"  {'actividad':<18}{'n':>6}{'error árbol':>13}{'error baseline':>16}")
+    # Errors by activity type
+    P("\n=== Error rate by activity (tree vs baseline) ===")
+    P(f"  {'activity':<18}{'n':>6}{'tree error':>13}{'baseline error':>16}")
     for a in sorted(np.unique(y)):
         k = y == a
         e_t = (pred_t[k] != y_inv[k]).mean(); e_b = (pred_b[k] != y_inv[k]).mean()
         P(f"  {ACT[a]:<18}{int(k.sum()):>6}{e_t:>13.3f}{e_b:>16.3f}")
 
-    # ---------- Modelo final con todos los datos ----------
+    # ---------- Final model with all the data ----------
     final = mk().fit(X, y_inv)
-    P("\n=== MODELO FINAL (entrenado con todos los datos) ===")
-    P(f"  nodos totales: {final.tree_.node_count} | hojas: {final.get_n_leaves()} | "
-      f"profundidad: {final.get_depth()}")
+    P("\n=== FINAL MODEL (trained with all the data) ===")
+    P(f"  total nodes: {final.tree_.node_count} | leaves: {final.get_n_leaves()} | "
+      f"depth: {final.get_depth()}")
     imp = final.feature_importances_
     order = np.argsort(imp)[::-1]
-    P("  importancia de características:")
+    P("  feature importance:")
     for i in order:
         if imp[i] > 0:
             P(f"    {names[i]:<20}{imp[i]:.3f}")
     P("\n" + export_text(final, feature_names=names))
 
-    # ---------- Veredicto frente a los criterios del plan ----------
-    P("=== CRITERIOS DE VIABILIDAD ===")
-    P(f"  >=90% movimiento detectado:   {mt['sens_mov']:.3f}  -> {'OK' if mt['sens_mov']>=0.90 else 'NO'}")
-    P(f"  <=10% quietas descartadas:    {mt['quietas_descartadas']:.3f}  -> "
+    # ---------- Verdict against the plan's criteria ----------
+    P("=== FEASIBILITY CRITERIA ===")
+    P(f"  >=90% motion detected:        {mt['sens_mov']:.3f}  -> {'OK' if mt['sens_mov']>=0.90 else 'NO'}")
+    P(f"  <=10% still discarded:        {mt['quietas_descartadas']:.3f}  -> "
       f"{'OK' if mt['quietas_descartadas']<=0.10 else 'NO'}")
-    P(f"  Mejora sobre baseline (mov. detectado a igual o menos descarte): "
-      f"árbol {mt['sens_mov']:.3f}/{mt['quietas_descartadas']:.3f} vs "
-      f"umbral {mb['sens_mov']:.3f}/{mb['quietas_descartadas']:.3f}")
+    P(f"  Improvement over baseline (motion detected at equal or lower discard): "
+      f"tree {mt['sens_mov']:.3f}/{mt['quietas_descartadas']:.3f} vs "
+      f"threshold {mb['sens_mov']:.3f}/{mb['quietas_descartadas']:.3f}")
 
-    # ---------- Gráficas y exportación ----------
-    plot_cm(mb["cm"], "Baseline (umbral)", os.path.join(args.out, "confusion_baseline.png"))
-    plot_cm(mt["cm"], f"Árbol (depth={best_depth})", os.path.join(args.out, "confusion_arbol.png"))
+    # ---------- Plots and export ----------
+    plot_cm(mb["cm"], "Baseline (threshold)", os.path.join(args.out, "confusion_baseline.png"))
+    plot_cm(mt["cm"], f"Tree (depth={best_depth})", os.path.join(args.out, "confusion_arbol.png"))
     fig, ax = plt.subplots(figsize=(14, 6))
-    plot_tree(final, feature_names=names, class_names=["válida", "no válida"],
+    plot_tree(final, feature_names=names, class_names=["valid", "not valid"],
               filled=True, impurity=False, ax=ax, fontsize=8)
     fig.savefig(os.path.join(args.out, "arbol.png"), dpi=130, bbox_inches="tight"); plt.close(fig)
     fig, ax = plt.subplots(figsize=(6, 3.5))
     ax.barh([names[i] for i in order[::-1]], imp[order[::-1]])
-    ax.set_xlabel("importancia"); fig.tight_layout()
+    ax.set_xlabel("importance"); fig.tight_layout()
     fig.savefig(os.path.join(args.out, "importancias.png"), dpi=140); plt.close(fig)
     export_tree_to_c(final, names, os.path.join(args.out, "decision_tree.h"))
-    P(f"\nArchivos guardados en {args.out}/")
+    P(f"\nFiles saved to {args.out}/")
     log.close()
 
 
