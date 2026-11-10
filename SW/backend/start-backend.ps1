@@ -1,30 +1,30 @@
 ﻿<#
 .SYNOPSIS
-    Starts the CorPost backend: Docker + TimescaleDB + migrations + FastAPI.
+    Arranca el backend de CorPost: Docker + TimescaleDB + migraciones + FastAPI.
 
 .DESCRIPTION
-    It can be run from any folder: the script changes into SW/backend by itself.
+    Se puede ejecutar desde cualquier carpeta: el script entra solo en SW/backend.
 
-    Normal mode (default):
-        TimescaleDB and the API run in containers. The Alembic migrations
-        are applied automatically when the backend container starts.
+    Modo normal (por defecto):
+        TimescaleDB y la API corren en contenedores. Las migraciones de Alembic
+        se aplican solas al arrancar el contenedor del backend.
 
-    -Dev mode:
-        Only the database runs in Docker. FastAPI runs on the local machine with
-        automatic reload when files are saved (for development). It stays in the
-        foreground; Ctrl+C stops it.
+    Modo -Dev:
+        Solo la base de datos corre en Docker. FastAPI corre en tu PC con
+        recarga automatica al guardar cambios (para programar). Se queda en
+        primer plano; con Ctrl+C se para.
 
-    -Stop mode:
-        Stops the containers (the data is kept in the volume).
+    Modo -Stop:
+        Para los contenedores (los datos se conservan en el volumen).
 
 .EXAMPLE
-    .\start-backend.ps1               # everything in Docker
-    .\start-backend.ps1 -Dev          # DB in Docker + local API with --reload
-    .\start-backend.ps1 -Stop         # stop everything
-    .\start-backend.ps1 -NoBrowser    # do not open http://localhost:8000/docs
+    .\SW\start-backend.ps1               # todo en Docker
+    .\SW\start-backend.ps1 -Dev          # BD en Docker + API local con --reload
+    .\SW\start-backend.ps1 -Stop         # parar todo
+    .\SW\start-backend.ps1 -NoBrowser    # no abrir http://localhost:8000/docs
 
 .NOTES
-    If Windows blocks the script (execution policy), run it like this:
+    Si Windows bloquea el script (politica de ejecucion), lanzalo asi:
     powershell -ExecutionPolicy Bypass -File .\start-backend.ps1
 #>
 [CmdletBinding()]
@@ -36,7 +36,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-# 1) Change into the backend folder (the script's own folder), wherever it is launched from
+# 1) Entrar en la carpeta del backend (la del propio script), sea cual sea desde donde se lance
 Set-Location -Path $PSScriptRoot
 
 $ApiPort = if ($env:API_PORT) { $env:API_PORT } else { '8000' }
@@ -46,10 +46,10 @@ function Step([string]$msg) { Write-Host "`n==> $msg" -ForegroundColor Cyan }
 function Ok([string]$msg)   { Write-Host "    $msg" -ForegroundColor Green }
 function Warn([string]$msg) { Write-Host "    $msg" -ForegroundColor Yellow }
 
-# Run an external program and fail if it returns an error
+# Ejecuta un programa externo y falla si devuelve error
 function Run([string]$exe, [string[]]$arguments) {
     & $exe @arguments
-    if ($LASTEXITCODE -ne 0) { throw "Failed: $exe $($arguments -join ' ')" }
+    if ($LASTEXITCODE -ne 0) { throw "Ha fallado: $exe $($arguments -join ' ')" }
 }
 
 function Test-Docker {
@@ -66,99 +66,99 @@ function Wait-Until([scriptblock]$check, [int]$timeoutSec, [string]$what) {
         try { if (& $check) { return $true } } catch { }
         Start-Sleep -Seconds 2
     }
-    Warn "Timed out waiting for: $what"
+    Warn "Tiempo agotado esperando: $what"
     return $false
 }
 
-# ---------------------------------------------------------------- Stop
+# ---------------------------------------------------------------- Parar
 if ($Stop) {
     if (-not (Get-Command docker -ErrorAction SilentlyContinue) -or -not (Test-Docker)) {
-        Warn 'Docker is not running: there are no containers to stop.'
+        Warn 'Docker no esta en marcha: no hay contenedores que parar.'
         return
     }
-    Step 'Stopping containers (docker compose down)'
+    Step 'Parando contenedores (docker compose down)'
     Run docker @('compose', 'down')
-    Ok 'Stopped. The data is kept. To delete it as well: docker compose down -v'
+    Ok 'Parado. Los datos se conservan. Para borrarlos tambien: docker compose down -v'
     return
 }
 
 # ---------------------------------------------------------------- Docker
-Step 'Checking Docker'
+Step 'Comprobando Docker'
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
-    throw 'The "docker" command was not found. Install Docker Desktop.'
+    throw 'No encuentro el comando "docker". Instala Docker Desktop.'
 }
 if (-not (Test-Docker)) {
     $desktop = Join-Path $env:ProgramFiles 'Docker\Docker\Docker Desktop.exe'
     if (Test-Path $desktop) {
-        Warn 'Docker is not running: starting Docker Desktop (it may take a minute)...'
+        Warn 'Docker no esta en marcha: arrancando Docker Desktop (puede tardar un minuto)...'
         Start-Process $desktop
-        if (-not (Wait-Until { Test-Docker } 180 'Docker to be ready')) {
-            throw 'Docker did not start. Open Docker Desktop manually and run the script again.'
+        if (-not (Wait-Until { Test-Docker } 180 'que Docker este listo')) {
+            throw 'Docker no ha arrancado. Abre Docker Desktop a mano y vuelve a lanzar el script.'
         }
     } else {
-        throw 'Docker is not running. Open Docker Desktop and run the script again.'
+        throw 'Docker no esta en marcha. Abre Docker Desktop y vuelve a lanzar el script.'
     }
 }
-Ok 'Docker ready'
+Ok 'Docker listo'
 
 # ---------------------------------------------------------------- .env
 if (-not (Test-Path '.env')) {
     if (Test-Path '.env.example') {
         Copy-Item '.env.example' '.env'
-        Warn '.env did not exist: created from .env.example'
+        Warn 'No existia .env: creado a partir de .env.example'
     } else {
-        throw 'The .env file is missing (and there is no .env.example).'
+        throw 'Falta el archivo .env (y no hay .env.example).'
     }
 }
 
 if ($Dev) {
-    # ------------------------------------------------------------ Development mode
-    Step 'Database in Docker (without the backend container)'
-    Run docker @('compose', 'stop', 'backend')   # frees port $ApiPort for the local uvicorn
+    # ------------------------------------------------------------ Modo desarrollo
+    Step 'Base de datos en Docker (sin el contenedor del backend)'
+    Run docker @('compose', 'stop', 'backend')   # libera el puerto $ApiPort para uvicorn local
     Run docker @('compose', 'up', '-d', 'db')
     $dbId = (docker compose ps -q db)
-    if (-not (Wait-Until { (docker inspect --format '{{.State.Health.Status}}' $dbId) -eq 'healthy' } 90 'the database')) {
-        throw 'The database did not become ready.'
+    if (-not (Wait-Until { (docker inspect --format '{{.State.Health.Status}}' $dbId) -eq 'healthy' } 90 'la base de datos')) {
+        throw 'La base de datos no ha llegado a estar lista.'
     }
-    Ok 'Database ready (localhost:5432)'
+    Ok 'Base de datos lista (localhost:5432)'
 
-    Step 'Virtual environment and dependencies'
+    Step 'Entorno virtual y dependencias'
     if (-not (Test-Path '.\.venv\Scripts\python.exe')) {
         Run python @('-m', 'venv', '.venv')
-        Ok 'Virtual environment created'
+        Ok 'Entorno virtual creado'
     }
     $py = '.\.venv\Scripts\python.exe'
     Run $py @('-m', 'pip', 'install', '-q', '-r', 'requirements.txt')
-    Ok 'Dependencies up to date'
+    Ok 'Dependencias al dia'
 
-    Step 'Migrations (alembic upgrade head)'
+    Step 'Migraciones (alembic upgrade head)'
     Run $py @('-m', 'alembic', 'upgrade', 'head')
 
-    Step "FastAPI locally with automatic reload: $BaseUrl/docs   (Ctrl+C to stop)"
+    Step "FastAPI en local con recarga automatica: $BaseUrl/docs   (Ctrl+C para parar)"
     if (-not $NoBrowser) { Start-Process "$BaseUrl/docs" }
     & $py -m uvicorn app.main:app --reload --port $ApiPort
     return
 }
 
-# ---------------------------------------------------------------- Normal mode (everything in Docker)
-Step 'Building and starting database + backend (docker compose up -d --build)'
+# ---------------------------------------------------------------- Modo normal (todo en Docker)
+Step 'Construyendo y levantando base de datos + backend (docker compose up -d --build)'
 Run docker @('compose', 'up', '-d', '--build')
 
-Step 'Waiting for the API to respond (includes migrations)'
+Step 'Esperando a que la API responda (incluye migraciones)'
 $ready = Wait-Until {
     (Invoke-WebRequest -UseBasicParsing "$BaseUrl/health/db" -TimeoutSec 3).StatusCode -eq 200
-} 90 'the API'
+} 90 'la API'
 if (-not $ready) {
-    Warn 'The API is not responding. Last lines of the backend log:'
+    Warn 'La API no responde. Ultimas lineas del log del backend:'
     docker compose logs --tail 25 backend
-    throw 'The backend did not start.'
+    throw 'El backend no ha arrancado.'
 }
 
-Step 'Backend running'
+Step 'Backend en marcha'
 docker compose ps
 Ok "API:   $BaseUrl/health"
 Ok "Docs:  $BaseUrl/docs"
 Write-Host ''
-Write-Host '    View logs:  docker compose logs -f backend'
-Write-Host '    Stop:       .\start-backend.ps1 -Stop'
+Write-Host '    Ver logs:  docker compose logs -f backend'
+Write-Host '    Parar:     .\start-backend.ps1 -Stop'
 if (-not $NoBrowser) { Start-Process "$BaseUrl/docs" }
