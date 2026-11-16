@@ -13,6 +13,7 @@ web-build/
 *.tsbuildinfo
 
 # Android
+android/
 android/build/
 android/app/build/
 android/.gradle/
@@ -23,6 +24,7 @@ android/local.properties
 *.keystore
 
 # iOS
+ios/
 ios/build/
 ios/Pods/
 *.xcworkspace/xcuserdata/

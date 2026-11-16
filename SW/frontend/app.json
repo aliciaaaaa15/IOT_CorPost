@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "CorPost",
+    "slug": "corpost-mobile",
+    "scheme": "corpost",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "plugins": [
+      "expo-router",
+      [
+        "react-native-ble-plx",
+        {
+          "isBackgroundEnabled": false,
+          "modes": [
+            "central"
+          ],
+          "bluetoothAlwaysPermission": "CorPost utiliza Bluetooth para conectarse al dispositivo."
+        }
+      ],
+      "expo-font",
+      "expo-status-bar",
+      "expo-router"
+    ],
+    "android": {
+      "package": "com.corpost.mobile",
+      "permissions": [
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.BLUETOOTH_SCAN",
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
+    },
+    "ios": {
+      "bundleIdentifier": "com.corpost.mobile",
+      "infoPlist": {
+        "NSBluetoothAlwaysUsageDescription": "CorPost utiliza Bluetooth para conectarse al dispositivo.",
+        "NSBluetoothPeripheralUsageDescription": "CorPost utiliza Bluetooth para comunicarse con el dispositivo."
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "24d65334-bb0b-4d19-a3c5-c74f6a2b8c04"
+      }
+    }
+  }
+}
