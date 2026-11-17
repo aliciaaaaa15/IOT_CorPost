@@ -8,5 +8,6 @@ target_sources(app PRIVATE
 	src/bno055.c
 	src/vibro.c
 	src/posture.c
+	src/motion.c
 	src/ble.c
 )

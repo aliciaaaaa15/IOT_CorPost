@@ -34,35 +34,29 @@ static float angle_between(const float a[3], const float b[3])
 
 void posture_window_stats(const struct imu_sample *s, const bool *ok, int n, struct window_result *r)
 {
-	float sum_mag = 0.0f, sum_mag2 = 0.0f;
-
 	*r = (struct window_result){0};
 	for (int i = 0; i < n; i++) {
 		if (!ok[i]) {
 			continue;
 		}
-		float a[3] = {s[i].acc[0], s[i].acc[1], s[i].acc[2]};
-		float m = norm3(a);
-
 		for (int k = 0; k < 3; k++) {
-			r->acc_mean[k] += a[k];
+			r->acc_mean[k] += s[i].acc[k];
 			r->gyr_mean_dps[k] += s[i].gyr[k] / 16.0f;
 		}
-		sum_mag += m;
-		sum_mag2 += m * m;
 		r->n_valid++;
 	}
-	if (r->n_valid == 0) {
+	if (r->n_valid < MIN_VALID_SAMPLES) {
+		r->moving = true; /* too many samples lost: the window cannot be trusted */
 		return;
 	}
 	for (int k = 0; k < 3; k++) {
 		r->acc_mean[k] /= r->n_valid;
 		r->gyr_mean_dps[k] /= r->n_valid;
 	}
-	float mean = sum_mag / r->n_valid;
-	float var = sum_mag2 / r->n_valid - mean * mean;
 
-	r->amag_std_mg = var > 0.0f ? sqrtf(var) : 0.0f;
+	/* Motion filter: decision tree trained with our own recordings */
+	motion_features(s, ok, n, r->feat);
+	r->moving = motion_is_moving(r->feat);
 }
 
 void posture_set_reference(const float acc_mean[3])
@@ -76,8 +70,7 @@ void posture_eval(const struct imu_sample *s, const bool *ok, int n, struct wind
 {
 	posture_window_stats(s, ok, n, r);
 
-	/* PROVISIONAL motion filter (threshold). TODO: decision tree. */
-	if (r->n_valid < MIN_VALID_SAMPLES || r->amag_std_mg > MOTION_STD_MG) {
+	if (r->moving) {
 		r->status = POSTURE_INVALID;
 		return;
 	}

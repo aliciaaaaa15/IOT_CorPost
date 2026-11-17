@@ -3,7 +3,7 @@
 2. python run_hapt.py --data .  --out out                         # HAPT dataset (folder containing RawData/)
    python run_hapt.py --data .  --out out_of --orientation-free   # without per-axis features
 3. Record our own data and run: python run_own.py --data ./mis_grabaciones --orientation-free
-4. Copy out*/decision_tree.h + features.h into the firmware.
+4. Copy out_own/decision_tree.h to corpost_fw/src/decision_tree.h (the features are already ported in corpost_fw/src/motion.c).
 Files: har_common.py (windows/features/baseline), run_hapt.py, run_own.py, features.h
 
 

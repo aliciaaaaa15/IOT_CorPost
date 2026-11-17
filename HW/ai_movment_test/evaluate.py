@@ -4,7 +4,7 @@ evaluate.py - Evaluates how accurate the trees (and the threshold) are on our OW
 What it does
 ------------
 1. Reads the CSV files in `mis_grabaciones/` (same format and same preprocessing as run_own.py:
-   trimming, 10 Hz, 2 s windows with 50 % overlap).
+   trimming, 25 Hz, 2 s windows with 50 % overlap).
 2. Loads each `decision_tree.h` and runs it as is (parses the C if/else, with
    float32 comparisons as on the microcontroller). This evaluates EXACTLY what will go into the firmware.
 3. Computes the confusion matrix, motion detected, still windows discarded, confidence
@@ -35,11 +35,11 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from har_common import FEATURE_NAMES, make_windows, downsample, ThresholdBaseline
+from har_common import FS_TARGET, FEATURE_NAMES, make_windows, downsample, ThresholdBaseline
 from run_own import VALID, INVALID, TRIM_S, PURITY, FS_INTERNAL, load_recording
 from run_hapt import metrics, loso
 
-FS_T = 10
+FS_T = FS_TARGET
 AXIS_FEATURES = {"acc_x_std", "acc_y_std", "acc_z_std", "acc_max_axis_range"}
 
 
@@ -209,7 +209,7 @@ def main():
                     help="decision_tree.h files that have NOT seen our data")
     ap.add_argument("--in-sample-models", nargs="*", default=[],
                     help="decision_tree.h files trained with this same data (optimistic result)")
-    ap.add_argument("--hapt-threshold", type=float, default=0.0424,
+    ap.add_argument("--hapt-threshold", type=float, default=0.0429,
                     help="acc_mag_std threshold (g) learned with HAPT; use 0 to skip it")
     ap.add_argument("--depth", type=int, default=3, help="depth of the own tree (LOPO)")
     ap.add_argument("--orientation-free", action="store_true",

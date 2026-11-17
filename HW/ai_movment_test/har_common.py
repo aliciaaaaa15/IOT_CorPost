@@ -5,9 +5,9 @@ Used both with the HAPT dataset and with the project's own recordings.
 import numpy as np
 
 # ---------------- Final system parameters ----------------
-FS_TARGET = 10          # Hz of the device's actual measurement
-WIN_SAMPLES = 20        # 2 s at 10 Hz
-STEP_SAMPLES = 10       # 50 % overlap
+FS_TARGET = 25          # Hz of the device's actual measurement (corpost_fw: SAMPLE_PERIOD_MS 40)
+WIN_SAMPLES = 50        # 2 s at 25 Hz (corpost_fw: WINDOW_SAMPLES)
+STEP_SAMPLES = 25       # 50 % overlap (only to get more training windows)
 
 FEATURE_NAMES = [
     "acc_mag_std",      # standard deviation of the acceleration magnitude

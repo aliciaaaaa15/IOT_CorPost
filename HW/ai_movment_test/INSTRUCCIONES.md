@@ -7,7 +7,7 @@
 | Setting | Value |
 |---|---|
 | Active sensors | **Accelerometer** and **gyroscope** only. Turn off GPS, camera, microphone, etc. |
-| Sampling rate | **50 Hz** for both (or the highest the phone allows, if lower). The code later downsamples to 10 Hz. |
+| Sampling rate | **50 Hz** for both (or the highest the phone allows, if lower). The code later downsamples to 25 Hz, the rate of the firmware. |
 | Acceleration | The one that **includes gravity**. It is what makes it possible to compute the angle. The converter warns if the magnitude at rest is not ~1 g. |
 | Screen | Always on, with the app in the foreground. |
 | Interruptions | Airplane mode and "do not disturb", **with no vibration**. A vibration from a notification contaminates the data. |

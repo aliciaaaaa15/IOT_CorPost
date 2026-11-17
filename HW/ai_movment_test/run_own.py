@@ -29,7 +29,7 @@ INVALID = {"andar", "levantarse", "sentarse", "estirar", "girar", "agacharse",
            "gesticular", "inclinarse", "moverse"}   # add any borderline classes that are decided on
 TRIM_S = 6.0     # seconds trimmed at the start and at the end (putting on / taking off the phone)
 PURITY = 1.0     # each recording has a single label
-FS_INTERNAL = 50  # interpolated to 50 Hz and then averaged down to 10 Hz
+FS_INTERNAL = 50  # interpolated to 50 Hz and then averaged down to FS_TARGET (25 Hz)
 
 
 def find_cols(df):

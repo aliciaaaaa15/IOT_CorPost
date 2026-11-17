@@ -1,61 +1,61 @@
-(modo independiente de orientación: acc_mag_std, acc_mag_range, gyro_mag_std, gyro_mag_range, angle_change, angle_max_dev)
-Ventanas: 10180 | personas: 30
-  válidas (quieto): 4554 | no válidas (movimiento): 5626
-     1 andar              2055
-     2 subir_escaleras    1765
-     3 bajar_escaleras    1579
-     4 sentado            2164
-     5 de_pie             2390
-     7 de_pie->sentado    137
-     8 sentado->de_pie    90
+(orientation-independent mode: acc_mag_std, acc_mag_range, gyro_mag_std, gyro_mag_range, angle_change, angle_max_dev)
+Windows: 10106 | people: 30
+  valid (still): 4536 | not valid (motion): 5570
+     1 walking            2037
+     2 stairs_up          1754
+     3 stairs_down        1563
+     4 sitting            2157
+     5 standing           2379
+     7 stand->sit         132
+     8 sit->stand         84
 
-=== BASELINE: umbral en acc_mag_std (leave-one-person-out) ===
-  umbral con todos los datos: 0.0424 g
-  exactitud 0.997 | movimiento detectado 0.996 | quietas descartadas 0.002
-  matriz [[TN FP],[FN TP]]: [[4544, 10], [25, 5601]]
+=== BASELINE: threshold on acc_mag_std (leave-one-person-out) ===
+  threshold with all the data: 0.0429 g
+  accuracy 0.997 | motion detected 0.996 | still discarded 0.002
+  matriz [[TN FP],[FN TP]]: [[4526, 10], [22, 5548]]
 
-=== ÁRBOL (leave-one-person-out) ===
-  depth=2: acc 0.998 | mov detectado 0.998 | quietas descartadas 0.002
-  depth=3: acc 0.998 | mov detectado 0.998 | quietas descartadas 0.002
-  depth=4: acc 0.998 | mov detectado 0.998 | quietas descartadas 0.002
-  depth=5: acc 0.998 | mov detectado 0.998 | quietas descartadas 0.002
-  depth=6: acc 0.998 | mov detectado 0.998 | quietas descartadas 0.002
-  -> profundidad elegida: 2
-  exactitud 0.998 | movimiento detectado 0.998 | quietas descartadas 0.002
-  matriz [[TN FP],[FN TP]]: [[4545, 9], [9, 5617]]
+=== TREE (leave-one-person-out) ===
+  depth=2: acc 0.998 | motion detected 0.999 | still discarded 0.002
+  depth=3: acc 0.998 | motion detected 0.999 | still discarded 0.002
+  depth=4: acc 0.998 | motion detected 0.999 | still discarded 0.002
+  depth=5: acc 0.998 | motion detected 0.999 | still discarded 0.002
+  depth=6: acc 0.998 | motion detected 0.999 | still discarded 0.002
+  -> chosen depth: 2
+  accuracy 0.998 | motion detected 0.999 | still discarded 0.002
+  matriz [[TN FP],[FN TP]]: [[4525, 11], [6, 5564]]
 
-  Por persona: sensibilidad mov. media 0.999 (mín 0.981, persona 18) | quietas descartadas media 0.002 (máx 0.017)
+  Per person: mean motion sensitivity 0.999 (min 0.990, person 18) | mean still discarded 0.002 (max 0.015)
 
-=== Tasa de error por actividad (árbol vs baseline) ===
-  actividad              n  error árbol  error baseline
-  andar               2055        0.000           0.000
-  subir_escaleras     1765        0.000           0.000
-  bajar_escaleras     1579        0.000           0.000
-  sentado             2164        0.002           0.000
-  de_pie              2390        0.002           0.004
-  de_pie->sentado      137        0.029           0.109
-  sentado->de_pie       90        0.056           0.111
+=== Error rate by activity (tree vs baseline) ===
+  activity               n   tree error  baseline error
+  walking             2037        0.000           0.000
+  stairs_up           1754        0.000           0.000
+  stairs_down         1563        0.000           0.000
+  sitting             2157        0.003           0.000
+  standing            2379        0.002           0.004
+  stand->sit           132        0.015           0.098
+  sit->stand            84        0.048           0.107
 
-=== MODELO FINAL (entrenado con todos los datos) ===
-  nodos totales: 7 | hojas: 4 | profundidad: 2
-  importancia de características:
-    acc_mag_std         0.997
-    angle_max_dev       0.003
+=== FINAL MODEL (trained with all the data) ===
+  total nodes: 7 | leaves: 4 | depth: 2
+  feature importance:
+    acc_mag_std         0.995
+    angle_max_dev       0.005
 
 |--- acc_mag_std <= 0.04
-|   |--- angle_max_dev <= 19.72
+|   |--- angle_max_dev <= 16.69
 |   |   |--- class: 0
-|   |--- angle_max_dev >  19.72
+|   |--- angle_max_dev >  16.69
 |   |   |--- class: 1
 |--- acc_mag_std >  0.04
-|   |--- angle_max_dev <= 8.22
+|   |--- angle_max_dev <= 11.53
 |   |   |--- class: 1
-|   |--- angle_max_dev >  8.22
+|   |--- angle_max_dev >  11.53
 |   |   |--- class: 1
 
-=== CRITERIOS DE VIABILIDAD ===
-  >=90% movimiento detectado:   0.998  -> OK
-  <=10% quietas descartadas:    0.002  -> OK
-  Mejora sobre baseline (mov. detectado a igual o menos descarte): árbol 0.998/0.002 vs umbral 0.996/0.002
+=== FEASIBILITY CRITERIA ===
+  >=90% motion detected:        0.999  -> OK
+  <=10% still discarded:        0.002  -> OK
+  Improvement over baseline (motion detected at equal or lower discard): tree 0.999/0.002 vs threshold 0.996/0.002
 
-Archivos guardados en ./out_orientation_free/
+Files saved to out_orientation_free/

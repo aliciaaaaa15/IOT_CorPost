@@ -26,10 +26,9 @@
 /* "Battery" field of the packet. The PoC has no battery (USB): 0xFF = not available */
 #define BATTERY_LEVEL        0xFF
 
-/* PROVISIONAL motion filter: threshold on the standard deviation of the magnitude
-  of the acceleration within the window (0.042 g = baseline of the HAPT pipeline).
-  It will be replaced by the decision tree retrained at 25 Hz. */
-#define MOTION_STD_MG        42.0f
+/* Motion filter: decision tree in decision_tree.h (features in motion.c).
+  It was trained at 25 Hz with 2 s windows, so SAMPLE_PERIOD_MS and WINDOW_SAMPLES
+  must not change without retraining it (ai_movment_test/har_common.py). */
 
 /* Vibration: minimum time between two alerts. Development: 0 (vibrates on every BAD).
   D3: 300 s (5 min). */

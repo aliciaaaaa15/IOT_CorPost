@@ -1,93 +1,134 @@
-Datos: 3294 ventanas | 27 grabaciones | personas: [np.str_('alicia')]
-  quietas (válida): 1234 | movimiento (no válida): 2060
-  ventanas por tipo: {'sentado_teclear': np.int64(139), 'sentado_reclinado': np.int64(127), 'girar_silla': np.int64(125), 'estirar_delante': np.int64(124), 'levantarse_normal': np.int64(124), 'moverse_silla': np.int64(124), 'sentado_ladoder': np.int64(124), 'andar_lento': np.int64(123), 'sentado_movil': np.int64(123), 'inclinarse_lento': np.int64(122), 'inclinarse_normal': np.int64(122), 'moverse_piernas': np.int64(122), 'sentado_recto': np.int64(122), 'agacharse_sentado': np.int64(121), 'depie_quieto': np.int64(121), 'estirar_lado': np.int64(121), 'sentado_ladoizq': np.int64(121), 'gesticular': np.int64(120), 'girar_tronco': np.int64(120), 'sentado_hablar': np.int64(120), 'agacharse_depie': np.int64(119), 'estirar_arriba': np.int64(119), 'moverse_chaqueta': np.int64(119), 'sentado_encorvado': np.int64(119), 'andar_normal': np.int64(118), 'sentado_adelante': np.int64(118), 'levantarse_lento': np.int64(117)}
-[aviso] con <3 personas no se calculan los modelos LOPO y las cifras son poco fiables.
+Data: 8846 windows | 76 recordings | people: [np.str_('alicia'), np.str_('arantxa'), np.str_('didac')]
+  still (valid): 2937 | motion (not valid): 5909
+  windows by type: {'estirar_delante': np.int64(355), 'sentado_reclinado': np.int64(353), 'girar_silla': np.int64(352), 'girar_tronco': np.int64(351), 'levantarse_normal': np.int64(351), 'moverse_silla': np.int64(351), 'agacharse_sentado': np.int64(350), 'estirar_lado': np.int64(349), 'inclinarse_lento': np.int64(348), 'sentado_recto': np.int64(348), 'levantarse_lento': np.int64(347), 'moverse_chaqueta': np.int64(347), 'gesticular': np.int64(346), 'sentado_encorvado': np.int64(346), 'andar_lento': np.int64(345), 'moverse_piernas': np.int64(345), 'sentado_adelante': np.int64(345), 'andar_normal': np.int64(344), 'estirar_arriba': np.int64(344), 'sentado_ladoizq': np.int64(344), 'agacharse_depie': np.int64(343), 'inclinarse_normal': np.int64(341), 'sentado_teclear': np.int64(252), 'sentado_hablar': np.int64(239), 'sentado_ladoder': np.int64(238), 'sentado_movil': np.int64(237), 'depie_quieto': np.int64(235)}
 
 ==============================================================================
-RESUMEN (criterios: mov. detectado >= 90 %, quietas descartadas <= 10 %)
+SUMMARY (criteria: motion detected >= 90 %, still discarded <= 10 %)
 ==============================================================================
-modelo                                       mov.detect.         IC95%  descart.         IC95%  veredicto
-Umbral HAPT (0.0424 g)                             0.197   [0.05,0.36]     0.000   [0.00,0.00]  NO CUMPLE
-Árbol out                                          0.128   [0.03,0.27]     0.000   [0.00,0.00]  NO CUMPLE
-Árbol out_orientation_free                         0.387   [0.19,0.60]     0.000   [0.00,0.00]  NO CUMPLE
-  * = entrenado con estos mismos datos: cifra optimista, no usar para decidir.
-  IC95 %: bootstrap remuestreando grabaciones (es más fiable que remuestrear ventanas).
+model                                        mot.detect.         CI95%  discard.         CI95%  verdict
+HAPT threshold (0.0429 g)                          0.246   [0.16,0.36]     0.000   [0.00,0.00]  FAIL
+Tree out                                           0.143   [0.08,0.22]     0.000   [0.00,0.00]  FAIL
+Tree out_orientation_free                          0.445   [0.33,0.56]     0.000   [0.00,0.00]  FAIL
+Own threshold (LOPO)                               0.914   [0.86,0.96]     0.072   [0.04,0.12]  PASS
+Own tree (LOPO, depth 3, no axes)                  0.945   [0.91,0.97]     0.037   [0.02,0.06]  PASS
+  * = trained with this same data: optimistic figure, do not use to decide.
+  CI95 %: bootstrap resampling recordings (more reliable than resampling windows).
 
 ------------------------------------------------------------------------------
-Umbral HAPT (0.0424 g)
-  umbral fijo en acc_mag_std, aprendido con HAPT
-  matriz  quieto->válida 1234 | quieto->no válida 0 | movimiento->válida 1654 (¡grave!) | movimiento->no válida 406
-  exactitud 0.498 | movimiento detectado 0.197 | quietas descartadas 0.000
-  por persona:
-    alicia       mov. detectado 0.197 | quietas descartadas 0.000 | error 0.502
-  grabaciones con más errores:
-    andar_lento_alicia_01                    error 1.00 (123 ventanas)
-    estirar_arriba_alicia_01                 error 1.00 (119 ventanas)
-    estirar_delante_alicia_01                error 1.00 (124 ventanas)
-    girar_silla_alicia_01                    error 1.00 (125 ventanas)
-    girar_tronco_alicia_01                   error 1.00 (120 ventanas)
+HAPT threshold (0.0429 g)
+  fixed threshold on acc_mag_std, learned with HAPT
+  matrix  still->valid 2937 | still->not valid 0 | motion->valid 4453 (serious!) | motion->not valid 1456
+  accuracy 0.497 | motion detected 0.246 | still discarded 0.000
+  per person:
+    alicia       motion detected 0.206 | still discarded 0.000 | error 0.497
+    arantxa      motion detected 0.321 | still discarded 0.000 | error 0.527
+    didac        motion detected 0.217 | still discarded 0.000 | error 0.492
+  recordings with the most errors:
+    inclinarse_lento_alicia_01               error 1.00 (122 windows)
+    gesticular_didac_01                      error 1.00 (114 windows)
+    girar_silla_alicia_01                    error 1.00 (125 windows)
+    girar_silla_arantxa_01                   error 1.00 (112 windows)
+    estirar_lado_alicia_01                   error 1.00 (121 windows)
 
 ------------------------------------------------------------------------------
-Árbol out
-  7 nodos, usa: acc_mag_range, acc_x_std, acc_y_std
-  matriz  quieto->válida 1234 | quieto->no válida 0 | movimiento->válida 1797 (¡grave!) | movimiento->no válida 263
-  exactitud 0.454 | movimiento detectado 0.128 | quietas descartadas 0.000
-  por persona:
-    alicia       mov. detectado 0.128 | quietas descartadas 0.000 | error 0.546
-  grabaciones con más errores:
-    gesticular_alicia_01                     error 1.00 (120 ventanas)
-    estirar_arriba_alicia_01                 error 1.00 (119 ventanas)
-    estirar_delante_alicia_01                error 1.00 (124 ventanas)
-    girar_silla_alicia_01                    error 1.00 (125 ventanas)
-    girar_tronco_alicia_01                   error 1.00 (120 ventanas)
+Tree out
+  7 nodes, uses: acc_mag_range, acc_x_std, angle_max_dev
+  matrix  still->valid 2937 | still->not valid 0 | motion->valid 5064 (serious!) | motion->not valid 845
+  accuracy 0.428 | motion detected 0.143 | still discarded 0.000
+  per person:
+    alicia       motion detected 0.121 | still discarded 0.000 | error 0.549
+    arantxa      motion detected 0.179 | still discarded 0.000 | error 0.637
+    didac        motion detected 0.131 | still discarded 0.000 | error 0.546
+  recordings with the most errors:
+    inclinarse_lento_didac_01                error 1.00 (117 windows)
+    gesticular_didac_01                      error 1.00 (114 windows)
+    girar_silla_alicia_01                    error 1.00 (125 windows)
+    girar_silla_arantxa_01                   error 1.00 (112 windows)
+    estirar_lado_alicia_01                   error 1.00 (121 windows)
 
 ------------------------------------------------------------------------------
-Árbol out_orientation_free
-  7 nodos, usa: acc_mag_std, angle_max_dev
-  matriz  quieto->válida 1234 | quieto->no válida 0 | movimiento->válida 1263 (¡grave!) | movimiento->no válida 797
-  exactitud 0.617 | movimiento detectado 0.387 | quietas descartadas 0.000
-  por persona:
-    alicia       mov. detectado 0.387 | quietas descartadas 0.000 | error 0.383
-  grabaciones con más errores:
-    girar_silla_alicia_01                    error 1.00 (125 ventanas)
-    girar_tronco_alicia_01                   error 1.00 (120 ventanas)
-    estirar_arriba_alicia_01                 error 1.00 (119 ventanas)
-    gesticular_alicia_01                     error 1.00 (120 ventanas)
-    inclinarse_normal_alicia_01              error 1.00 (122 ventanas)
+Tree out_orientation_free
+  7 nodes, uses: acc_mag_std, angle_max_dev
+  matrix  still->valid 2937 | still->not valid 0 | motion->valid 3280 (serious!) | motion->not valid 2629
+  accuracy 0.629 | motion detected 0.445 | still discarded 0.000
+  per person:
+    alicia       motion detected 0.446 | still discarded 0.000 | error 0.347
+    arantxa      motion detected 0.471 | still discarded 0.000 | error 0.410
+    didac        motion detected 0.418 | still discarded 0.000 | error 0.366
+  recordings with the most errors:
+    gesticular_alicia_01                     error 1.00 (120 windows)
+    girar_silla_arantxa_01                   error 1.00 (112 windows)
+    girar_silla_alicia_01                    error 1.00 (125 windows)
+    estirar_arriba_didac_01                  error 1.00 (113 windows)
+    girar_tronco_alicia_01                   error 1.00 (120 windows)
+
+------------------------------------------------------------------------------
+Own threshold (LOPO)
+  threshold retrained leaving one person out
+  matrix  still->valid 2727 | still->not valid 210 | motion->valid 507 (serious!) | motion->not valid 5402
+  accuracy 0.919 | motion detected 0.914 | still discarded 0.072
+  per person:
+    alicia       motion detected 0.850 | still discarded 0.030 | error 0.105
+    arantxa      motion detected 0.934 | still discarded 0.098 | error 0.073
+    didac        motion detected 0.962 | still discarded 0.103 | error 0.062
+  recordings with the most errors:
+    inclinarse_lento_alicia_01               error 0.84 (122 windows)
+    inclinarse_normal_alicia_01              error 0.70 (122 windows)
+    inclinarse_lento_arantxa_01              error 0.63 (109 windows)
+    sentado_hablar_didac_01                  error 0.51 (119 windows)
+    inclinarse_normal_arantxa_01             error 0.38 (108 windows)
+
+------------------------------------------------------------------------------
+Own tree (LOPO, depth 3, no axes)
+  tree retrained leaving one person out: the honest figure for 'training with my data'
+  matrix  still->valid 2829 | still->not valid 108 | motion->valid 323 (serious!) | motion->not valid 5586
+  accuracy 0.951 | motion detected 0.945 | still discarded 0.037
+  per person:
+    alicia       motion detected 0.926 | still discarded 0.024 | error 0.056
+    arantxa      motion detected 0.930 | still discarded 0.031 | error 0.061
+    didac        motion detected 0.981 | still discarded 0.053 | error 0.032
+  recordings with the most errors:
+    gesticular_alicia_01                     error 0.55 (120 windows)
+    inclinarse_lento_arantxa_01              error 0.54 (109 windows)
+    inclinarse_normal_arantxa_01             error 0.36 (108 windows)
+    sentado_hablar_didac_01                  error 0.26 (119 windows)
+    moverse_piernas_arantxa_01               error 0.25 (108 windows)
 
 ==============================================================================
-ERROR POR TIPO DE ACTIVIDAD (fracción de ventanas mal clasificadas)
+ERROR BY ACTIVITY TYPE (fraction of misclassified windows)
 ==============================================================================
-  M1 = Umbral HAPT (0.0424 g)
-  M2 = Árbol out
-  M3 = Árbol out_orientation_free
-                     n       clase   M1   M2   M3
-girar_silla        125  movimiento 1.00 1.00 1.00
-inclinarse_normal  122  movimiento 1.00 1.00 1.00
-moverse_piernas    122  movimiento 1.00 1.00 1.00
-estirar_arriba     119  movimiento 1.00 1.00 1.00
-gesticular         120  movimiento 1.00 1.00 1.00
-girar_tronco       120  movimiento 1.00 1.00 1.00
-andar_lento        123  movimiento 1.00 0.98 0.98
-inclinarse_lento   122  movimiento 1.00 1.00 0.97
-moverse_chaqueta   119  movimiento 0.98 0.96 0.97
-estirar_lado       121  movimiento 1.00 1.00 0.52
-levantarse_lento   117  movimiento 0.97 0.99 0.48
-levantarse_normal  124  movimiento 0.51 1.00 0.17
-estirar_delante    124  movimiento 1.00 1.00 0.10
-andar_normal       118  movimiento 0.16 0.05 0.08
-moverse_silla      124  movimiento 0.07 0.70 0.07
-agacharse_sentado  121  movimiento 0.77 0.64 0.07
-agacharse_depie    119  movimiento 0.18 0.49 0.02
-sentado_teclear    139      quieto 0.00 0.00 0.00
-sentado_reclinado  127      quieto 0.00 0.00 0.00
-sentado_movil      123      quieto 0.00 0.00 0.00
-sentado_ladoder    124      quieto 0.00 0.00 0.00
-sentado_recto      122      quieto 0.00 0.00 0.00
-depie_quieto       121      quieto 0.00 0.00 0.00
-sentado_ladoizq    121      quieto 0.00 0.00 0.00
-sentado_hablar     120      quieto 0.00 0.00 0.00
-sentado_encorvado  119      quieto 0.00 0.00 0.00
-sentado_adelante   118      quieto 0.00 0.00 0.00
+  M1 = HAPT threshold (0.0429 g)
+  M2 = Tree out
+  M3 = Tree out_orientation_free
+  M4 = Own threshold (LOPO)
+  M5 = Own tree (LOPO, depth 3, no axes)
+                     n   clase   M1   M2   M3   M4   M5
+inclinarse_lento   348  motion 1.00 1.00 0.84 0.54 0.24
+sentado_hablar     239   still 0.00 0.00 0.00 0.38 0.23
+gesticular         346  motion 0.99 0.99 0.97 0.02 0.20
+moverse_piernas    345  motion 0.99 0.98 0.92 0.14 0.17
+inclinarse_normal  341  motion 1.00 1.00 0.79 0.40 0.15
+estirar_arriba     344  motion 1.00 1.00 0.99 0.05 0.05
+sentado_encorvado  346   still 0.00 0.00 0.00 0.09 0.05
+moverse_chaqueta   347  motion 0.96 0.94 0.89 0.02 0.04
+sentado_recto      348   still 0.00 0.00 0.00 0.07 0.03
+andar_lento        345  motion 0.92 0.88 0.94 0.00 0.03
+levantarse_lento   347  motion 0.53 0.94 0.22 0.07 0.03
+sentado_ladoder    238   still 0.00 0.00 0.00 0.04 0.03
+sentado_ladoizq    344   still 0.00 0.00 0.00 0.05 0.02
+sentado_reclinado  353   still 0.00 0.00 0.00 0.04 0.02
+sentado_teclear    252   still 0.00 0.00 0.00 0.04 0.01
+agacharse_sentado  350  motion 0.67 0.95 0.10 0.03 0.01
+moverse_silla      351  motion 0.36 0.57 0.21 0.00 0.01
+girar_silla        352  motion 1.00 0.97 0.98 0.11 0.01
+sentado_movil      237   still 0.00 0.00 0.00 0.00 0.01
+sentado_adelante   345   still 0.00 0.00 0.00 0.03 0.01
+estirar_delante    355  motion 0.99 0.99 0.26 0.01 0.00
+levantarse_normal  351  motion 0.21 0.74 0.06 0.00 0.00
+girar_tronco       351  motion 1.00 1.00 1.00 0.06 0.00
+estirar_lado       349  motion 0.99 0.99 0.20 0.01 0.00
+andar_normal       344  motion 0.04 0.06 0.04 0.00 0.00
+agacharse_depie    343  motion 0.15 0.55 0.03 0.00 0.00
+depie_quieto       235   still 0.00 0.00 0.00 0.01 0.00
 
-Guardado en ./out_eval/: informe.txt, confusion_matrices.png, predicciones_por_ventana.csv, error_por_tipo.csv
+Saved to ./out_eval/: informe.txt, confusion_matrices.png, predicciones_por_ventana.csv, error_por_tipo.csv

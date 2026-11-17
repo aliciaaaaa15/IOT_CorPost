@@ -17,4 +17,3 @@ class Reading(Base):
     gyro_z: Mapped[int] = mapped_column(SmallInteger)
     angle: Mapped[float] = mapped_column(REAL)         # degrees
     status: Mapped[int] = mapped_column(SmallInteger)  # 0 OK, 1 BAD, 2 INVALID
-    battery: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)  # None if 0xFF

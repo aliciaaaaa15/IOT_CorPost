@@ -2,6 +2,7 @@
 #pragma once
 #include <stdbool.h>
 #include "bno055.h"
+#include "motion.h"
 
 /* Same values as the "status" field of the BLE packet (D3, Table II) */
 enum posture_status {
@@ -14,12 +15,14 @@ struct window_result {
 	int n_valid;            /* valid samples in the window */
 	float acc_mean[3];      /* mg */
 	float gyr_mean_dps[3];  /* dps */
-	float amag_std_mg;      /* standard deviation of the acceleration magnitude */
+	float feat[MOTION_N_FEATURES]; /* features of the motion filter (motion.h) */
+	bool moving;            /* motion filter: tree says motion, or too few samples */
 	float angle_deg;        /* deviation from the reference (only if not INVALID) */
 	enum posture_status status;
 };
 
-/* Mean and deviation of a window, without classifying it (used for calibration). */
+/* Means, features and motion filter of a window, without computing the angle
+  (used for calibration). */
 void posture_window_stats(const struct imu_sample *s, const bool *ok, int n, struct window_result *r);
 
 /* Store the reference posture (0°) from the mean gravity of a window. */

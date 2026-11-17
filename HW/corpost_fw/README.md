@@ -89,13 +89,12 @@ Solo contiene `#define`. Para ajustar el comportamiento se cambia aquí y se rec
 
 | Parámetro | Valor actual | Significado |
 |---|---|---|
-| `SAMPLE_PERIOD_MS` / `WINDOW_SAMPLES` | 40 ms / 50 | Ventana de 2 s a 25 Hz, como en el D3 |
+| `SAMPLE_PERIOD_MS` / `WINDOW_SAMPLES` | 40 ms / 50 | Ventana de 2 s a 25 Hz, como en el D3. El árbol del filtro de movimiento se entrenó con estos valores: si cambian, hay que reentrenarlo |
 | `MIN_VALID_SAMPLES` | 40 | Si se pierden más de 10 muestras por errores del bus, la ventana es INVALID |
 | `MEASURE_INTERVAL_S` | 15 s | Intervalo **inicial** entre medidas. Es un valor de desarrollo (el D3 dice 1, 3 o 5 min); el definitivo se decidirá tras las pruebas. La app lo cambia con el comando 0x01 (entre `MEASURE_INTERVAL_MIN_S` = 5 s y `MEASURE_INTERVAL_MAX_S` = 3600 s) |
 | `TOLERANCE_DEG` | 15° | Tolerancia **inicial**: desviación respecto a la referencia a partir de la cual la postura es BAD. La app la cambia con el comando 0x02 (de 1° a 90°) |
 | `BUFFER_SIZE` | 50 | Lecturas que caben en el búfer circular mientras no hay conexión BLE (D3) |
 | `BATTERY_LEVEL` | 0xFF | Valor del campo "batería" del paquete. El PoC no tiene batería, así que se envía 0xFF = "no disponible" |
-| `MOTION_STD_MG` | 42 mg | Umbral del filtro de movimiento **provisional** (sección 2, posture.c) |
 | `VIB_MIN_INTERVAL_S` | 0 s | Tiempo mínimo entre dos vibraciones. 0 en desarrollo (vibra en cada BAD); el D3 dice 5 min |
 
 ### [src/bno055.c](src/bno055.c): el sensor
@@ -125,20 +124,15 @@ El Modulino Vibro tiene **su propio microcontrolador**. No controlamos el motor 
 
 ### [src/posture.c](src/posture.c): la lógica de postura
 
-- **`posture_window_stats`** calcula dos cosas sobre las muestras válidas de la ventana:
+- **`posture_window_stats`** calcula sobre las muestras válidas de la ventana:
   - **El vector medio de aceleración.** Con el usuario quieto, el acelerómetro solo mide la **gravedad**, así que este vector indica hacia dónde está "abajo" desde el punto de vista del sensor. De ahí sale la orientación y, por tanto, la postura.
-  - **La desviación estándar del módulo `|a|`.**
-    - Quieto, `|a|` vale unos 1000 mg (1 g) y casi no varía: en las pruebas, la desviación fue de 0,6 a 2,3 mg.
-    - Al moverse, la aceleración del propio movimiento se suma a la gravedad y `|a|` varía mucho: de 145 a 240 mg en las pruebas.
-    - Se calcula como `sqrt(E[m²] − E[m]²)`.
+  - **El filtro de movimiento** (`moving`). Si hay menos de 40 muestras válidas, la ventana se marca como movimiento. Si no, llama a [src/motion.c](src/motion.c), que calcula 6 features y las pasa al **árbol de decisión** de [src/decision_tree.h](src/decision_tree.h).
 - **`posture_set_reference`:** guarda el vector medio de la calibración como postura de **0°**.
 - **`angle_between`:** el ángulo entre dos vectores, `cos θ = (a·b) / (|a|·|b|)`, de modo que `θ = acos(...)`.
   - Limita el coseno a [−1, 1], porque por redondeo podría salir 1,0000001 y `acos` devolvería NaN.
   - Como el ángulo se mide **respecto a la referencia** y no respecto a la vertical, no importa cómo esté orientado el sensor en la ropa.
 - **`posture_eval`** decide el estado:
-  1. Si hay menos de 40 muestras válidas, o la desviación de `|a|` supera 42 mg, la ventana es **INVALID**: el usuario se está moviendo y la medida no es fiable.
-     - Este **filtro de movimiento es provisional.** Es un umbral simple: 42 mg sale del *baseline* del pipeline de entrenamiento con el dataset HAPT.
-     - Se sustituirá por el **árbol de decisión** cuando se reentrene con nuestros datos a 25 Hz.
+  1. Si el filtro de movimiento dice `moving`, la ventana es **INVALID**: el usuario se está moviendo (o se perdieron demasiadas muestras) y la medida no es fiable.
   2. Si no, calcula el ángulo respecto a la referencia: si supera 15° es **BAD**; si no, **OK**.
 
   Los valores del `enum` (OK = 0, BAD = 1, INVALID = 2) coinciden con el campo "status" del paquete BLE definido en el D3.
@@ -186,11 +180,29 @@ Todo lo relacionado con BLE: el servicio GATT, el advertising, la seguridad y el
   - `print_f1` existe porque el `printk` de Zephyr no imprime números `float` por defecto. Imprime con un decimal usando enteros.
   - `last_vib` empieza en un valor negativo para que la **primera** vez que salga BAD vibre aunque no haya pasado el intervalo mínimo.
 
+### [src/motion.c](src/motion.c) y [src/decision_tree.h](src/decision_tree.h): el filtro de movimiento
+
+- **Qué hace:** decide si la ventana de 2 s es de usuario quieto o en movimiento con un **árbol de decisión** de profundidad 3, entrenado con nuestras grabaciones (proyecto [`ai_movment_test`](../ai_movment_test)).
+- **Features** (las mismas que `window_features()` en `har_common.py`, modo independiente de la orientación):
+  - desviación típica y rango del módulo de la aceleración (g);
+  - desviación típica y rango del módulo del giroscopio (rad/s);
+  - ángulo entre el vector gravedad de la primera y la última muestra (°);
+  - ángulo máximo de una muestra respecto al vector gravedad medio (°).
+- **Adaptaciones respecto a Python:**
+  - Convierte las unidades del BNO055 a las del entrenamiento: mg → g y 1/16 dps → rad/s.
+  - Usa solo las muestras válidas. El ángulo inicial-final usa la primera y la última muestra **válidas**.
+  - Calcula las varianzas en dos pasadas (media y luego desviaciones) para no perder precisión en `float`.
+- **Árbol actual:** casi todo el peso está en la variación del giroscopio. Si `gyro_mag_std` supera ~0,038 rad/s (~2,2 °/s), es movimiento; si no, solo es movimiento si el vector gravedad ha girado más de ~3,3° entre el principio y el final de la ventana.
+- **Resultados** (validación dejando fuera a una persona, 3 personas, 25 Hz): 5,5 % de ventanas de movimiento aceptadas como quietas y 3,7 % de ventanas quietas descartadas.
+- **Verificación del port:** reproduciendo `motion.c` en float32 sobre las 8846 ventanas del dataset, la decisión coincide con la de Python en el 99,98 % (las diferencias vienen del redondeo a enteros del BNO055) y en el 99,6 % simulando 10 de 50 muestras perdidas.
+- **Cómo actualizarlo:** reentrenar con `python run_own.py --data ./mis_grabaciones --out ./out_own --orientation-free` y copiar `out_own/decision_tree.h` a `src/decision_tree.h`. No se edita a mano.
+- **Limitación:** el árbol se entrenó con datos de un **móvil**, no del BNO055. El ruido y los filtros son distintos, así que conviene comprobarlo en el montaje real y, si hace falta, grabar con el BNO055 y reentrenar.
+
 ---
 
 ## 3. Limitaciones conocidas
 
-- **El filtro de movimiento es un umbral simple.** Se sustituirá por el árbol de decisión (proyecto `ai_movment_test`) reentrenado a 25 Hz con datos propios.
+- **El árbol del filtro de movimiento se entrenó con datos de un móvil**, no del BNO055 (ver la sección de `motion.c`). Todavía no se ha probado en el montaje real.
 - **`vibro_alert` bloquea unos 0,8 s.** No afecta al BLE: la radio la gestiona el controlador de Nordic por su cuenta, y los comandos llegan por el hilo de Bluetooth, no por el principal.
 - **El BLE está compilado pero aún no se ha probado con el móvil** (sección 8.7).
 - **El passkey se "muestra" por RTT**, así que para emparejar hace falta el PC con el visor RTT abierto. En un producto real se usaría una pantalla o un código impreso en el dispositivo (sección 8.3).

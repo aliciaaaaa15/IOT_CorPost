@@ -16,7 +16,7 @@
  *
  * DK Button 2: deletes the stored pairing (to pair another phone).
  *
- * Pending: decision tree instead of the threshold.
+ * Motion filter: decision tree trained with our own recordings (motion.c, decision_tree.h).
  * The RTT output is for debugging. */
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
@@ -41,6 +41,8 @@ static volatile bool recalibrate;
 static volatile bool clear_bonds;
 static volatile uint16_t interval_s = MEASURE_INTERVAL_S;
 static volatile bool vibration_on = true;
+
+#define RAD2DEG_F 57.29577951f /* only to print the gyroscope in dps */
 
 static struct imu_sample win[WINDOW_SAMPLES];
 static bool win_ok[WINDOW_SAMPLES];
@@ -146,10 +148,11 @@ static void calibrate(void)
 	while (1) {
 		capture_window();
 		posture_window_stats(win, win_ok, WINDOW_SAMPLES, &r);
-		if (r.n_valid >= MIN_VALID_SAMPLES && r.amag_std_mg <= MOTION_STD_MG) {
+		if (!r.moving) {
 			break;
 		}
-		print_f1("  moving, std_mg", r.amag_std_mg);
+		printk("  moving (valid=%d/%d) ", r.n_valid, WINDOW_SAMPLES);
+		print_f1("gyro_std_dps", r.feat[2] * RAD2DEG_F);
 		printk("retrying\n");
 	}
 	posture_set_reference(r.acc_mean);
@@ -227,7 +230,8 @@ int main(void)
 		if (r.status != POSTURE_INVALID) {
 			print_f1("angle", r.angle_deg);
 		}
-		print_f1("std_mg", r.amag_std_mg);
+		print_f1("gyro_std_dps", r.feat[2] * RAD2DEG_F);
+		print_f1("angle_change", r.feat[4]);
 		printk("valid=%d/%d\n", r.n_valid, WINDOW_SAMPLES);
 
 		if (r.status == POSTURE_BAD && vibration_on &&

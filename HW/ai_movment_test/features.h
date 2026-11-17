@@ -1,4 +1,6 @@
-/* features.h - Orientation-free features for a window of 20 samples at 10 Hz.
+/* features.h - Orientation-free features for a window of 50 samples at 25 Hz (2 s).
+ * Reference C version of window_features(). The firmware uses its own adapted copy,
+ * corpost_fw/src/motion.c (BNO055 units, lost samples skipped).
  * Order (matches run_hapt.py --orientation-free / run_own.py --orientation-free):
  *   f[0] acc_mag_std   f[1] acc_mag_range   f[2] gyro_mag_std
  *   f[3] gyro_mag_range f[4] angle_change   f[5] angle_max_dev
@@ -7,7 +9,7 @@
  * decision_tree.h are those of this list of 6. */
 #pragma once
 #include <math.h>
-#define WIN_N 20
+#define WIN_N 50
 #define RAD2DEG 57.29577951f
 
 static inline float vnorm(const float *v) { return sqrtf(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]); }
