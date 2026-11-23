@@ -2,15 +2,23 @@ from fastapi import Depends, FastAPI
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from app.core.handlers import register_exception_handlers
 from app.database import get_db
+from app.routers import auth
 
-app = FastAPI(title="CorPost API")
+VERSION = "0.1.0"
+
+app = FastAPI(title="CorPost API", version=VERSION)
+
+register_exception_handlers(app)
+
+app.include_router(auth.router)
 
 
 @app.get("/health")
 def health():
     """The API is alive (it does not touch the database)."""
-    return {"status": "ok"}
+    return {"status": "ok", "version": VERSION}
 
 
 @app.get("/health/db")

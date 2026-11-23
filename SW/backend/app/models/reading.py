@@ -8,6 +8,8 @@ class Reading(Base):
     __tablename__ = "readings"
 
     device_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    # Postgres TIMESTAMPTZ (UTC). HW sends epoch seconds (int); convert on ingestion:
+    # datetime.fromtimestamp(ts, tz=timezone.utc)
     timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), primary_key=True)
     acc_x: Mapped[int] = mapped_column(SmallInteger)   # mg
     acc_y: Mapped[int] = mapped_column(SmallInteger)
