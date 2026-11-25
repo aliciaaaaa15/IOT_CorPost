@@ -17,5 +17,5 @@ class Reading(Base):
     gyro_x: Mapped[int] = mapped_column(SmallInteger)  # 1/16 °/s
     gyro_y: Mapped[int] = mapped_column(SmallInteger)
     gyro_z: Mapped[int] = mapped_column(SmallInteger)
-    angle: Mapped[float] = mapped_column(REAL)         # degrees
+    angle_deg: Mapped[float] = mapped_column(REAL)         # degrees
     status: Mapped[int] = mapped_column(SmallInteger)  # 0 OK, 1 BAD, 2 INVALID

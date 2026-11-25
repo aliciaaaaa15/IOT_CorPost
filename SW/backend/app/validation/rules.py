@@ -1,5 +1,6 @@
 import re
 
+from datetime import datetime, timezone
 from decimal import Decimal
 
 from app.core.response_codes import ResponseCode
@@ -138,3 +139,16 @@ TIMESTAMP_RULES = {
 }
 
 TIMESTAMP_FUTURE_TOLERANCE_S = 300
+
+# date_from / date_to of GET /readings (same lower bound as TIMESTAMP_RULES).
+# No max_value: a future date_to is harmless (it just returns what exists).
+DATETIME_RULES = {
+    "field_name": "Date",
+    "codes": {
+        "invalid": ResponseCode.READING_DATE_INVALID,
+        "too_small": ResponseCode.READING_DATE_TOO_OLD,
+        "too_large": ResponseCode.READING_DATE_TOO_LATE,
+        "range": ResponseCode.READING_DATE_RANGE_INVALID,
+    },
+    "min_value": datetime(2020, 1, 1, tzinfo=timezone.utc),
+}

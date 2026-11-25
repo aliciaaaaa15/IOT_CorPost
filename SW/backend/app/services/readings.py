@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.core.response_codes import ResponseCode
 from app.core.exceptions import ConflictException
 
-from app.validation.validators import validate_batch
+from app.validation.validators import validate_batch, validate_datetime_range
 
 from app.repositories import reading as readings_repository
 
@@ -16,6 +16,7 @@ from app.schemas.readings import (
 )
 from app.models.user import User
 
+MAX_LOADED_READINGS_PER_REQUEST = 100
 
 def store_batch(
     batch: BatchInput,
@@ -32,15 +33,13 @@ def store_batch(
     # validate batch data
     valid_batch_readings, invalid_batch_readings = validate_batch(batch)
 
-    # convert timestamp to datetime and prepare data for db insert
+    # prepare rows for db insert: payload fields match the Reading columns,
+    # so only device_id is added and timestamp is converted (epoch -> datetime UTC)
     rows = [
         {
+            **r.model_dump(),
             "device_id": current_user.device_id,
             "timestamp": datetime.fromtimestamp(r.timestamp, tz=UTC),
-            "acc_x": r.acc_x, "acc_y": r.acc_y, "acc_z": r.acc_z,
-            "gyro_x": r.gyro_x, "gyro_y": r.gyro_y, "gyro_z": r.gyro_z,
-            "angle": r.angle_deg,
-            "status": r.status,
         }
         for r in valid_batch_readings
     ]
@@ -63,5 +62,33 @@ def load_readings(
     current_user: User,
     data: ReadingsLoadInput,
 ):
-    # TODO: GET /readings (pagination with next_cursor, max 100 per request)
-    raise NotImplementedError
+    # validate user has a device associated
+    if current_user.device_id is None:
+        raise ConflictException(
+            ResponseCode.DEVICE_NOT_LINKED,
+            "User has no device linked.",
+        )
+
+    # validate data range selected
+    date_from, date_to = validate_datetime_range(
+        data.date_from, 
+        data.date_to,
+    )
+
+    # load readings from db
+    readings, next_cursor = readings_repository.load_readings(
+        db,
+        current_user.device_id,
+        date_from,
+        date_to,
+        MAX_LOADED_READINGS_PER_REQUEST
+    )
+
+    return {
+        "readings": [
+            {"timestamp": timestamp, "angle_deg": angle_deg, "status": status}
+            for timestamp, angle_deg, status in readings
+        ],
+        "next_cursor": next_cursor,
+    }
+

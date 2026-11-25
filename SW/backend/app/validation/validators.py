@@ -18,6 +18,7 @@ from app.validation.rules import (
     ANGLE_RULES,
     TIMESTAMP_RULES,
     TIMESTAMP_FUTURE_TOLERANCE_S,
+    DATETIME_RULES
 )
 
 
@@ -113,45 +114,6 @@ def _validate_text(
     return value
 
 
-def _validate_decimal(
-    value,
-    *,
-    field_name: str,
-    codes: dict,
-    min_value: Decimal,
-    max_value: Decimal,
-    decimal_places: int,
-) -> Decimal:
-
-    try:
-        value = Decimal(value)
-    except Exception:
-        _raise_validation_error(
-            codes["invalid"],
-            f"{field_name} is invalid.",
-        )
-
-    if value < min_value:
-        _raise_validation_error(
-            codes["too_small"],
-            f"{field_name} must be at least {min_value}.",
-        )
-
-    if value > max_value:
-        _raise_validation_error(
-            codes["too_large"],
-            f"{field_name} cannot exceed {max_value}.",
-        )
-
-    if abs(value.as_tuple().exponent) > decimal_places:
-        _raise_validation_error(
-            codes["decimals"],
-            f"{field_name} cannot have more than {decimal_places} decimal places.",
-        )
-
-    return value
-
-
 def _validate_integer(
     value,
     *,
@@ -211,33 +173,44 @@ def _validate_float(
     return value
 
 
-def _validate_time(
-    value: str | None,
+def _validate_datetime(
+    value: datetime | None,
     *,
     field_name: str,
     codes: dict,
-    optional: bool = False,
-) -> time | None:
+    min_value: datetime,
+    max_value: datetime | None = None,
+) -> datetime:
+    """Validate a datetime and return it normalized to UTC.
 
-    if value is None:
+    A naive datetime is assumed to be UTC; an aware one is converted to UTC.
+    min_value / max_value must be aware datetimes; max_value is optional.
+    """
 
-        if optional:
-            return None
-
+    if not isinstance(value, datetime):
         _raise_validation_error(
             codes["invalid"],
-            f"{field_name} is required.",
+            f"{field_name} must be a datetime.",
         )
 
-    try:
-        return datetime.strptime(value, "%H:%M").time()
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    else:
+        value = value.astimezone(timezone.utc)
 
-    except ValueError:
-
+    if value < min_value:
         _raise_validation_error(
-            codes["invalid"],
-            f"{field_name} must have format HH:MM.",
+            codes["too_small"],
+            f"{field_name} cannot be before {min_value.isoformat()}.",
         )
+
+    if max_value is not None and value > max_value:
+        _raise_validation_error(
+            codes["too_large"],
+            f"{field_name} cannot be after {max_value.isoformat()}.",
+        )
+
+    return value
 
 
 def _validate_reading(reading: HWCompletePayload) -> str | None:
@@ -298,3 +271,17 @@ def validate_batch(batch: BatchInput) -> tuple[list[HWCompletePayload], list[tup
             rejected.append((reading.timestamp, code))
 
     return valid, rejected
+
+
+def validate_datetime_range(date_from: datetime, date_to: datetime) -> tuple[datetime, datetime]:
+
+    date_from_valid = _validate_datetime(date_from, **DATETIME_RULES)
+    date_to_valid = _validate_datetime(date_to, **DATETIME_RULES)
+
+    if date_from_valid > date_to_valid:
+        _raise_validation_error(
+            DATETIME_RULES["codes"]["range"],
+            f"{date_from_valid} must be a datetime before {date_to_valid}.",
+        ) 
+
+    return date_from_valid, date_to_valid
