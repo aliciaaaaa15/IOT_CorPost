@@ -1,24 +1,29 @@
 from decimal import Decimal
-from datetime import datetime, time, date
-from typing import Iterable
-from fastapi import UploadFile
-
+from datetime import datetime, time, date, timezone
+import math
 
 from app.core.exceptions import ValidationException
 
-
 from app.core.response_codes import ResponseCode
+
+from app.schemas.readings import BatchInput, HWCompletePayload
 
 from app.validation.rules import (
     EMAIL_RULES,
     USERNAME_RULES,
     PASSWORD_RULES,
+    ACC_RULES,
+    GYRO_RULES,
+    STATUS_RULES,
+    ANGLE_RULES,
+    TIMESTAMP_RULES,
+    TIMESTAMP_FUTURE_TOLERANCE_S,
 )
 
 
 # HELPERS
 
-def raise_validation_error(
+def _raise_validation_error(
     code: str,
     message: str,
 ):
@@ -28,7 +33,7 @@ def raise_validation_error(
         message=message,
     )
 
-def contains_control_characters(value: str) -> bool:
+def _contains_control_characters(value: str) -> bool:
     """
     Reject Unicode control characters.
 
@@ -45,7 +50,7 @@ def contains_control_characters(value: str) -> bool:
 
 # GENERIC VALIDATORS
 
-def validate_text(
+def _validate_text(
     value: str,
     field_name: str,
     codes: dict,
@@ -70,37 +75,37 @@ def validate_text(
         value = value.upper()
 
     if not value:
-        raise_validation_error(
+        _raise_validation_error(
             codes["empty"],
             f"{field_name} cannot be empty.",
         )
 
     if len(value) < min_length:
-        raise_validation_error(
+        _raise_validation_error(
             codes["too_short"],
             f"{field_name} must contain at least {min_length} characters.",
         )
 
     if len(value) > max_length:
-        raise_validation_error(
+        _raise_validation_error(
             codes["too_long"],
             f"{field_name} cannot exceed {max_length} characters.",
         )
 
-    if contains_control_characters(value):
-        raise_validation_error(
+    if _contains_control_characters(value):
+        _raise_validation_error(
             codes["control"],
             f"{field_name} contains invalid control characters.",
         )
 
     if not allow_spaces and any(ch.isspace() for ch in value):
-        raise_validation_error(
+        _raise_validation_error(
             codes["spaces"],
             f"{field_name} cannot contain spaces.",
         )
 
     if pattern is not None and not pattern.fullmatch(value):
-        raise_validation_error(
+        _raise_validation_error(
             codes["invalid"],
             f"{field_name} contains invalid characters.",
         )
@@ -108,7 +113,7 @@ def validate_text(
     return value
 
 
-def validate_decimal(
+def _validate_decimal(
     value,
     *,
     field_name: str,
@@ -121,25 +126,25 @@ def validate_decimal(
     try:
         value = Decimal(value)
     except Exception:
-        raise_validation_error(
+        _raise_validation_error(
             codes["invalid"],
             f"{field_name} is invalid.",
         )
 
     if value < min_value:
-        raise_validation_error(
+        _raise_validation_error(
             codes["too_small"],
             f"{field_name} must be at least {min_value}.",
         )
 
     if value > max_value:
-        raise_validation_error(
+        _raise_validation_error(
             codes["too_large"],
             f"{field_name} cannot exceed {max_value}.",
         )
 
     if abs(value.as_tuple().exponent) > decimal_places:
-        raise_validation_error(
+        _raise_validation_error(
             codes["decimals"],
             f"{field_name} cannot have more than {decimal_places} decimal places.",
         )
@@ -147,7 +152,7 @@ def validate_decimal(
     return value
 
 
-def validate_integer(
+def _validate_integer(
     value,
     *,
     field_name: str,
@@ -157,19 +162,48 @@ def validate_integer(
 ) -> int:
 
     if not isinstance(value, int):
-        raise_validation_error(
+        _raise_validation_error(
             codes["invalid"],
             f"{field_name} must be an integer.",
         )
 
     if value < min_value:
-        raise_validation_error(
+        _raise_validation_error(
             codes["too_small"],
             f"{field_name} must be at least {min_value}.",
         )
 
     if value > max_value:
-        raise_validation_error(
+        _raise_validation_error(
+            codes["too_large"],
+            f"{field_name} cannot exceed {max_value}.",
+        )
+
+    return value
+
+def _validate_float(
+    value: float,
+    *,
+    field_name: str,
+    codes: dict,
+    min_value: float,
+    max_value: float,
+) -> float:
+
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+        _raise_validation_error(
+            codes["invalid"],
+            f"{field_name} is invalid",
+        )
+
+    if value < min_value:
+        _raise_validation_error(
+            codes["too_small"],
+            f"{field_name} must be at least {min_value}.",
+        )
+
+    if value > max_value:
+        _raise_validation_error(
             codes["too_large"],
             f"{field_name} cannot exceed {max_value}.",
         )
@@ -177,7 +211,7 @@ def validate_integer(
     return value
 
 
-def validate_time(
+def _validate_time(
     value: str | None,
     *,
     field_name: str,
@@ -190,7 +224,7 @@ def validate_time(
         if optional:
             return None
 
-        raise_validation_error(
+        _raise_validation_error(
             codes["invalid"],
             f"{field_name} is required.",
         )
@@ -200,32 +234,67 @@ def validate_time(
 
     except ValueError:
 
-        raise_validation_error(
+        _raise_validation_error(
             codes["invalid"],
             f"{field_name} must have format HH:MM.",
         )
 
 
+def _validate_reading(reading: HWCompletePayload) -> str | None:
+    """Return None if the reading is valid, otherwise the ResponseCode of the first failure."""
+    max_timestamp = int(datetime.now(timezone.utc).timestamp()) + TIMESTAMP_FUTURE_TOLERANCE_S
+
+    try:
+        _validate_integer(reading.timestamp, max_value=max_timestamp, **TIMESTAMP_RULES)
+        _validate_integer(reading.acc_x, **ACC_RULES)
+        _validate_integer(reading.acc_y, **ACC_RULES)
+        _validate_integer(reading.acc_z, **ACC_RULES)
+        _validate_integer(reading.gyro_x, **GYRO_RULES)
+        _validate_integer(reading.gyro_y, **GYRO_RULES)
+        _validate_integer(reading.gyro_z, **GYRO_RULES)
+        _validate_float(reading.angle_deg, **ANGLE_RULES)
+        _validate_integer(reading.status, **STATUS_RULES)
+    except ValidationException as exc:
+        return exc.code
+
+    return None
+
+
+
+
 # PUBLIC TEXT VALIDATORS
 
 def validate_email(email: str) -> str:
-    return validate_text(
+    return _validate_text(
         value=email,
         **EMAIL_RULES,
     )
 
 
 def validate_username(username: str) -> str:
-    return validate_text(
+    return _validate_text(
         value=username,
         **USERNAME_RULES,
     )
 
 
 def validate_password(password: str) -> str:
-    return validate_text(
+    return _validate_text(
         value=password,
         **PASSWORD_RULES,
     )
 
 
+def validate_batch(batch: BatchInput) -> tuple[list[HWCompletePayload], list[tuple[int, str]]]:
+    """Split a batch into valid readings and rejected ones as (timestamp, code)."""
+    valid: list[HWCompletePayload] = []
+    rejected: list[tuple[int, str]] = []
+
+    for reading in batch.readings:
+        code = _validate_reading(reading)
+        if code is None:
+            valid.append(reading)
+        else:
+            rejected.append((reading.timestamp, code))
+
+    return valid, rejected

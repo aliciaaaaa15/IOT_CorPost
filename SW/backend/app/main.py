@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core.handlers import register_exception_handlers
 from app.database import get_db
-from app.routers import auth
+from app.routers import auth, readings
 
 VERSION = "0.1.0"
 
@@ -13,6 +13,7 @@ app = FastAPI(title="CorPost API", version=VERSION)
 register_exception_handlers(app)
 
 app.include_router(auth.router)
+app.include_router(readings.router)
 
 
 @app.get("/health")

@@ -78,3 +78,63 @@ PASSWORD_RULES = {
     "strip": False,
 }
 
+
+# READING
+INT16_MIN, INT16_MAX = -32768, 32767
+
+ACC_RULES = {
+    "field_name": "Acceleration",
+    "codes": {
+        "invalid": ResponseCode.READING_ACC_INVALID,
+        "too_small": ResponseCode.READING_ACC_TOO_SMALL,
+        "too_large": ResponseCode.READING_ACC_TOO_LARGE,
+    },
+    "min_value": -4096,
+    "max_value": 4096,
+}
+
+GYRO_RULES = {
+    "field_name": "Gyroscope",
+    "codes": {
+        "invalid": ResponseCode.READING_GYRO_INVALID,
+        "too_small": ResponseCode.READING_GYRO_TOO_SMALL,
+        "too_large": ResponseCode.READING_GYRO_TOO_LARGE,
+    },
+    "min_value": INT16_MIN,
+    "max_value": INT16_MAX,
+}
+
+STATUS_RULES = {
+    "field_name": "Status",
+    "codes": {
+        "invalid": ResponseCode.READING_STATUS_INVALID,
+        "too_small": ResponseCode.READING_STATUS_INVALID,
+        "too_large": ResponseCode.READING_STATUS_INVALID,
+    },
+    "min_value": 0,
+    "max_value": 2,
+}
+
+ANGLE_RULES = {
+    "field_name": "Angle",
+    "codes": {
+        "invalid": ResponseCode.READING_ANGLE_INVALID,
+        "too_small": ResponseCode.READING_ANGLE_OUT_OF_RANGE,
+        "too_large": ResponseCode.READING_ANGLE_OUT_OF_RANGE,
+    },
+    "min_value": 0.0,
+    "max_value": 180.0,
+}
+
+TIMESTAMP_RULES = {
+    "field_name": "Timestamp",
+    "codes": {
+        "invalid": ResponseCode.READING_TIMESTAMP_INVALID,
+        "too_small": ResponseCode.READING_TIMESTAMP_TOO_OLD,
+        "too_large": ResponseCode.READING_TIMESTAMP_IN_FUTURE,
+    },
+    "min_value": 1577836800,  # 2020-01-01 UTC
+    # max_value is computed at validation time: now + TIMESTAMP_FUTURE_TOLERANCE_S
+}
+
+TIMESTAMP_FUTURE_TOLERANCE_S = 300

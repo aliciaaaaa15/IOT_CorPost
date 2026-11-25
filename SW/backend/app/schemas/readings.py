@@ -25,6 +25,10 @@ class HWCompletePayload(BaseModel):
     angle_deg: float
     status: int
 
+class RejectedReading(BaseModel):
+    timestamp: int
+    code: str
+
 
 # --- INPUT SCHEMAS ---
 class BatchInput(BaseModel):
@@ -42,6 +46,7 @@ class BatchResponse(BaseModel):
     """Schema for hw data saved and duplicated from batch"""
     inserted: int
     duplicated: int
+    rejected: list[RejectedReading]
 
 
 class ReadingsLoadResponse(BaseModel):
