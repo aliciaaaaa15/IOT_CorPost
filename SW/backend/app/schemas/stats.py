@@ -1,14 +1,14 @@
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 
 
 class GroupByCriteria(str, Enum):
-    HOURS = "hours"
-    DAYS = "days"
-    WEEKS = "weeks"
-    MONTS = "months"
+    HOUR = "hour"
+    DAY = "day"
+    WEEK = "week"
+    MONTH = "month"
 
 class GroupStats(BaseModel):
     start: datetime
@@ -18,8 +18,8 @@ class GroupStats(BaseModel):
     bad_readings: int
     invalid_readings: int
     good_pct: float
-    avg_angle_deg: float
-    max_angle_deg: float
+    avg_angle_deg: float | None = None
+    max_angle_deg: float | None = None
 
 
 # --- INPUT SCHEMAS ---

@@ -21,7 +21,7 @@ router = APIRouter(
     response_model=StatsResponse,
 )
 def calculate_stats(
-    stats_criteria: StatsInput,
+    stats_criteria: StatsInput = Depends(),  # query params
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core.handlers import register_exception_handlers
 from app.database import get_db
-from app.routers import auth, readings
+from app.routers import auth, readings, stats
 
 VERSION = "0.1.0"
 
@@ -14,6 +14,7 @@ register_exception_handlers(app)
 
 app.include_router(auth.router)
 app.include_router(readings.router)
+app.include_router(stats.router)
 
 
 @app.get("/health")
